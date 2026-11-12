@@ -16,10 +16,11 @@ I.x = ic('<path d="M6 6l12 12M18 6 6 18"/>', 14); I.warn = ic('<path d="M12 3 2 
 /* resultado simulado de la validación de cada foto (control «Resultado de la foto»): ok | face | mrz | both */
 var OUT = 'ok'; try { OUT = localStorage.getItem('rep-io') || 'ok'; } catch (e) {}
 var TRIES = 0;
-/* verificación de contacto al final de la IV (Controles › Verificar contacto): 'off' · 'email' · 'sms' — un solo canal */
-var CV = 'email'; try { CV = localStorage.getItem('rep-ivcv') || 'email'; } catch (e) {} if (['off', 'email', 'sms'].indexOf(CV) < 0) CV = 'email';
+/* verificación de contacto al final de la IV (Controles › Verificar contacto): 'off' · 'email' · 'sms' · 'whatsapp' — el anfitrión elige un canal */
+var CV = 'email'; try { CV = localStorage.getItem('rep-ivcv') || 'email'; } catch (e) {} if (['off', 'email', 'sms', 'whatsapp'].indexOf(CV) < 0) CV = 'email';
+var CH = CV === 'whatsapp' ? 'wa' : 'sms';   /* canal real del código cuando es un móvil: el huésped puede cambiar SMS ⇄ WhatsApp */
 var CVV = 'a'; try { CVV = localStorage.getItem('rep-ivcvv') || 'a'; } catch (e) {} if (['a', '1', '2', '3', '4'].indexOf(CVV) < 0) CVV = 'a';
-var CT = { st: 'in', code: '', res: '', left: 0, exp: 0, email: '', cc: '+34', phone: '', sent: false }, CTCODE = CV === 'sms' ? '913604' : '482791', CTWRONG = false, CTT = 0, CTNF = 0;
+var CT = { st: 'in', code: '', res: '', left: 0, exp: 0, email: '', cc: '+34', ccc: 'ES', phone: '', sent: false, tries: 0 }, CTCODE = CV === 'email' ? '482791' : '913604', CTWRONG = false, CTT = 0, CTNF = 0;
 /* duración simulada de la verificación en segundos (0 = no termina nunca: se queda al 99 %) */
 var VT = 5; try { var vtv = localStorage.getItem('rep-iv-t'); if (vtv !== null) VT = Number(vtv); } catch (e) {}
 var CAT = [["AF","Afghanistan","generic-id-front.webp","generic-id-back.webp","generic-passport.webp"],["AL","Albania","AL-id-front.webp","AL-id-back.webp","AL-passport.webp"],["DZ","Algeria","DZ-id-front.webp","DZ-id-back.webp","DZ-passport.webp"],["AD","Andorra","","","generic-passport.webp"],["AO","Angola","","","generic-passport.webp"],["AG","Antigua and Barbuda","","","generic-passport.webp"],["AR","Argentina","AR-id-front.webp","AR-id-back.webp","AR-passport.webp"],["AM","Armenia","","","generic-passport.webp"],["AU","Australia","","","AU-passport.webp"],["AT","Austria","AT-id-front.webp","AT-id-back.webp","AT-passport.webp"],["AZ","Azerbaijan","","","AZ-passport.webp"],["BS","Bahamas","","","generic-passport.webp"],["BH","Bahrain","","","generic-passport.webp"],["BD","Bangladesh","","","generic-passport.webp"],["BB","Barbados","","","generic-passport.webp"],["BY","Belarus","BY-id-front.webp","BY-id-back.webp","BY-passport.webp"],["BE","Belgium","BE-id-front.webp","BE-id-back.webp","BE-passport.webp"],["BZ","Belize","","","generic-passport.webp"],["BJ","Benin","","","generic-passport.webp"],["BT","Bhutan","","","generic-passport.webp"],["BO","Bolivia","generic-id-front.webp","generic-id-back.webp","generic-passport.webp"],["BA","Bosnia and Herzegovina","BA-id-front.webp","BA-id-back.webp","BA-passport.webp"],["BW","Botswana","","","generic-passport.webp"],["BR","Brazil","BR-id-front.webp","BR-id-back.webp","BR-passport.webp"],["BN","Brunei","","","generic-passport.webp"],["BG","Bulgaria","BG-id-front.webp","BG-id-back.webp","BG-passport.webp"],["BF","Burkina Faso","","","generic-passport.webp"],["BI","Burundi","","","generic-passport.webp"],["KH","Cambodia","generic-id-front.webp","generic-id-back.webp","generic-passport.webp"],["CM","Cameroon","","","generic-passport.webp"],["CA","Canada","","","CA-passport.webp"],["CV","Cape Verde","","","generic-passport.webp"],["CF","Central African Republic","","","generic-passport.webp"],["TD","Chad","","","generic-passport.webp"],["CL","Chile","CL-id-front.webp","CL-id-back.webp","CL-passport.webp"],["CN","China","","","CN-passport.webp"],["CO","Colombia","CO-id-front.webp","CO-id-back.webp","CO-passport.webp"],["KM","Comoros","","","generic-passport.webp"],["CG","Congo","","","generic-passport.webp"],["CR","Costa Rica","generic-id-front.webp","generic-id-back.webp","generic-passport.webp"],["CI","Côte d'Ivoire","","","generic-passport.webp"],["HR","Croatia","HR-id-front.webp","HR-id-back.webp","HR-passport.webp"],["CU","Cuba","","","generic-passport.webp"],["CY","Cyprus","CY-id-front.webp","CY-id-back.webp","CY-passport.webp"],["CZ","Czechia","CZ-id-front.webp","CZ-id-back.webp","CZ-passport.webp"],["CD","Democratic Republic of the Congo","","","generic-passport.webp"],["DK","Denmark","","","DK-passport.webp"],["DJ","Djibouti","","","generic-passport.webp"],["DM","Dominica","","","generic-passport.webp"],["DO","Dominican Republic","","","generic-passport.webp"],["EC","Ecuador","generic-id-front.webp","EC-id-back.webp","generic-passport.webp"],["EG","Egypt","","","generic-passport.webp"],["SV","El Salvador","","","generic-passport.webp"],["GQ","Equatorial Guinea","","","generic-passport.webp"],["ER","Eritrea","","","generic-passport.webp"],["EE","Estonia","EE-id-front.webp","EE-id-back.webp","EE-passport.webp"],["SZ","Eswatini","","","generic-passport.webp"],["ET","Ethiopia","","","generic-passport.webp"],["FJ","Fiji","","","generic-passport.webp"],["FI","Finland","FI-id-front.webp","FI-id-back.webp","FI-passport.webp"],["FR","France","FR-id-front.webp","FR-id-back.webp","FR-passport.webp"],["GA","Gabon","","","generic-passport.webp"],["GM","Gambia","","","generic-passport.webp"],["GE","Georgia","GE-id-front.webp","GE-id-back.webp","GE-passport.webp"],["DE","Germany","DE-id-front.webp","DE-id-back.webp","DE-passport.webp"],["GH","Ghana","","","generic-passport.webp"],["GR","Greece","GR-id-front.webp","GR-id-back.webp","GR-passport.webp"],["GD","Grenada","","","generic-passport.webp"],["GT","Guatemala","","","generic-passport.webp"],["GN","Guinea","","","generic-passport.webp"],["GW","Guinea-Bissau","","","generic-passport.webp"],["GY","Guyana","","","generic-passport.webp"],["HT","Haiti","","","generic-passport.webp"],["HN","Honduras","generic-id-front.webp","generic-id-back.webp","generic-passport.webp"],["HU","Hungary","HU-id-front.webp","HU-id-back.webp","HU-passport.webp"],["IS","Iceland","IS-id-front.webp","IS-id-back.webp","IS-passport.webp"],["IN","India","","","IN-passport.webp"],["ID","Indonesia","","","generic-passport.webp"],["IR","Iran","","","generic-passport.webp"],["IQ","Iraq","","","generic-passport.webp"],["IE","Ireland","","","IE-passport.webp"],["IL","Israel","","","IL-passport.webp"],["IT","Italy","IT-id-front.webp","IT-id-back.webp","IT-passport.webp"],["JM","Jamaica","","","generic-passport.webp"],["JP","Japan","","","JP-passport.webp"],["JO","Jordan","","","generic-passport.webp"],["KZ","Kazakhstan","","","generic-passport.webp"],["KE","Kenya","","","generic-passport.webp"],["KI","Kiribati","","","generic-passport.webp"],["XK","Kosovo","XK-id-front.webp","XK-id-back.webp","XK-passport.webp"],["KW","Kuwait","","","generic-passport.webp"],["KG","Kyrgyzstan","","","generic-passport.webp"],["LA","Laos","","","generic-passport.webp"],["LV","Latvia","LV-id-front.webp","LV-id-back.webp","LV-passport.webp"],["LB","Lebanon","","","generic-passport.webp"],["LS","Lesotho","","","generic-passport.webp"],["LR","Liberia","","","generic-passport.webp"],["LY","Libya","","","generic-passport.webp"],["LI","Liechtenstein","LI-id-front.webp","LI-id-back.webp","LI-passport.webp"],["LT","Lithuania","LT-id-front.webp","LT-id-back.webp","LT-passport.webp"],["LU","Luxembourg","LU-id-front.webp","LU-id-back.webp","LU-passport.webp"],["MG","Madagascar","","","generic-passport.webp"],["MW","Malawi","","","generic-passport.webp"],["MY","Malaysia","","","MY-passport.webp"],["MV","Maldives","","","generic-passport.webp"],["ML","Mali","","","generic-passport.webp"],["MT","Malta","MT-id-front.webp","MT-id-back.webp","MT-passport.webp"],["MH","Marshall Islands","","","generic-passport.webp"],["MR","Mauritania","","","generic-passport.webp"],["MU","Mauritius","","","generic-passport.webp"],["MX","Mexico","MX-id-front.webp","MX-id-back.webp","MX-passport.webp"],["FM","Micronesia","","","generic-passport.webp"],["MD","Moldova","MD-id-front.webp","MD-id-back.webp","MD-passport.webp"],["MC","Monaco","MC-id-front.webp","MC-id-back.webp","MC-passport.webp"],["MN","Mongolia","","","generic-passport.webp"],["ME","Montenegro","ME-id-front.webp","ME-id-back.webp","ME-passport.webp"],["MA","Morocco","MA-id-front.webp","MA-id-back.webp","MA-passport.webp"],["MZ","Mozambique","","","generic-passport.webp"],["MM","Myanmar","","","generic-passport.webp"],["NA","Namibia","","","generic-passport.webp"],["NR","Nauru","","","generic-passport.webp"],["NP","Nepal","","","generic-passport.webp"],["NL","Netherlands","NL-id-front.webp","NL-id-back.webp","NL-passport.webp"],["NZ","New Zealand","","","generic-passport.webp"],["NI","Nicaragua","","","generic-passport.webp"],["NE","Niger","","","generic-passport.webp"],["NG","Nigeria","","","generic-passport.webp"],["KP","North Korea","","","generic-passport.webp"],["MK","North Macedonia","MK-id-front.webp","MK-id-back.webp","MK-passport.webp"],["NO","Norway","NO-id-front.webp","NO-id-back.webp","NO-passport.webp"],["OM","Oman","","","generic-passport.webp"],["PK","Pakistan","","","generic-passport.webp"],["PW","Palau","","","generic-passport.webp"],["PS","Palestinian Territories","","","generic-passport.webp"],["PA","Panama","","","generic-passport.webp"],["PG","Papua New Guinea","","","generic-passport.webp"],["PY","Paraguay","","","generic-passport.webp"],["PE","Peru","PE-id-front.webp","PE-id-back.webp","PE-passport.webp"],["PH","Philippines","","","generic-passport.webp"],["PL","Poland","PL-id-front.webp","PL-id-back.webp","PL-passport.webp"],["PT","Portugal","PT-id-front.webp","PT-id-back.webp","PT-passport.webp"],["QA","Qatar","","","generic-passport.webp"],["RO","Romania","RO-id-front.webp","RO-id-back.webp","RO-passport.webp"],["RU","Russia","","","RU-passport.webp"],["RW","Rwanda","","","generic-passport.webp"],["KN","Saint Kitts and Nevis","","","generic-passport.webp"],["LC","Saint Lucia","","","generic-passport.webp"],["VC","Saint Vincent and the Grenadines","","","generic-passport.webp"],["WS","Samoa","","","generic-passport.webp"],["SM","San Marino","SM-id-front.webp","SM-id-back.webp","generic-passport.webp"],["ST","São Tomé and Príncipe","","","generic-passport.webp"],["SA","Saudi Arabia","","","generic-passport.webp"],["SN","Senegal","","","generic-passport.webp"],["RS","Serbia","RS-id-front.webp","RS-id-back.webp","RS-passport.webp"],["SC","Seychelles","","","generic-passport.webp"],["SL","Sierra Leone","","","generic-passport.webp"],["SG","Singapore","","","generic-passport.webp"],["SK","Slovakia","SK-id-front.webp","SK-id-back.webp","SK-passport.webp"],["SI","Slovenia","SI-id-front.webp","SI-id-back.webp","SI-passport.webp"],["SB","Solomon Islands","","","generic-passport.webp"],["SO","Somalia","","","generic-passport.webp"],["ZA","South Africa","","","generic-passport.webp"],["KR","South Korea","","","KR-passport.webp"],["SS","South Sudan","","","generic-passport.webp"],["ES","Spain","ES-id-front.webp","ES-id-back.webp","ES-passport.webp"],["LK","Sri Lanka","","","generic-passport.webp"],["SD","Sudan","","","generic-passport.webp"],["SR","Suriname","","","generic-passport.webp"],["SE","Sweden","SE-id-front.webp","SE-id-back.webp","SE-passport.webp"],["CH","Switzerland","CH-id-front.webp","CH-id-back.webp","CH-passport.webp"],["SY","Syria","","","generic-passport.webp"],["TJ","Tajikistan","","","generic-passport.webp"],["TZ","Tanzania","","","generic-passport.webp"],["TH","Thailand","","","TH-passport.webp"],["TL","Timor-Leste","","","generic-passport.webp"],["TG","Togo","","","generic-passport.webp"],["TO","Tonga","","","generic-passport.webp"],["TT","Trinidad and Tobago","","","generic-passport.webp"],["TN","Tunisia","","","TN-passport.webp"],["TR","Turkey","TR-id-front.webp","TR-id-back.webp","TR-passport.webp"],["TM","Turkmenistan","","","generic-passport.webp"],["TV","Tuvalu","","","generic-passport.webp"],["UG","Uganda","","","generic-passport.webp"],["UA","Ukraine","UA-id-front.webp","UA-id-back.webp","UA-passport.webp"],["AE","United Arab Emirates","AE-id-front.webp","AE-id-back.webp","AE-passport.webp"],["GB","United Kingdom","","","GB-passport.webp"],["US","United States","","","US-passport.webp"],["UY","Uruguay","generic-id-front.webp","generic-id-back.webp","generic-passport.webp"],["UZ","Uzbekistan","","","generic-passport.webp"],["VU","Vanuatu","","","generic-passport.webp"],["VA","Vatican City","","","VA-passport.webp"],["VE","Venezuela","","","generic-passport.webp"],["VN","Vietnam","generic-id-front.webp","generic-id-back.webp","generic-passport.webp"],["YE","Yemen","","","generic-passport.webp"],["ZM","Zambia","","","generic-passport.webp"],["ZW","Zimbabwe","","","generic-passport.webp"]];
@@ -191,28 +192,38 @@ function runChecks(){
 var root = null, tm = 0;
 function finishIV(){ if (FROM === 'flow') { location.href = pg('g2-form-empty', '?ivd=1&ivc=' + encodeURIComponent(S.c) + '&ivk=' + encodeURIComponent(S.d) + '&ivn=' + encodeURIComponent((CATBY[S.c] || [])[1] || '')); return; } go('verifying'); tm = setTimeout(function(){ go('done'); }, 3200); }
 function stepLabel(){ if (S.step === 'doc') return ''; var n = parts().length + (CV !== 'off' ? 2 : 1); return 'Step ' + (S.i + 1) + ' of ' + n; }   /* anverso 1 · reverso 2 · selfie 3 · formulario 4 (con pasaporte: página 1 · selfie 2 · formulario 3) */   /* el "Step 1 of 4" aparece al llegar a la foto del anverso */
-/* ===== verificación de contacto (último paso de la IV): un solo canal, email O SMS ===== */
-function ctE(){ return CV !== 'sms'; }
+/* ===== verificación de contacto (último paso de la IV): el anfitrión elige UN canal: email · SMS · WhatsApp =====
+   Con SMS o WhatsApp el dato es el mismo (un móvil): si el código no llega, el huésped puede pedirlo por el otro canal (CH). */
+function ctE(){ return CV === 'email'; }
+function ctWA(){ return !ctE() && CH === 'wa'; }
+function ctVia(){ return ctE() ? 'by email' : ctWA() ? 'on WhatsApp' : 'by SMS'; }
+function ctTo(){ return ctE() ? 'to' : ctWA() ? 'on WhatsApp to' : 'by SMS to'; }
+function ctAddT(){ return ctE() ? 'Add your email' : CV === 'whatsapp' ? 'Add your WhatsApp number' : 'Add your phone number'; }
+function ctChgT(){ return ctE() ? 'Change your email' : 'Change your number'; }
+function ctChkT(){ return ctE() ? 'Check your email' : ctWA() ? 'Check WhatsApp' : 'Check your messages'; }
+function ctLbl(){ return ctE() ? 'Email' : CV === 'whatsapp' ? 'WhatsApp number' : 'Mobile number'; }
 function ctMask(){ if (!ctE()) { var d = CT.phone.replace(/\D/g, ''); return CT.cc + ' ' + d.slice(0, 1) + '•• ••• •' + d.slice(-2); } var p = CT.email.split('@'); if (p.length < 2 || p[0].length < 3) return esc(CT.email); return esc(p[0][0] + '•••' + p[0][p[0].length - 1] + '@' + p[1]); }
-var CTI = { mail: ic('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/>', 30), phone: ic('<rect x="6.5" y="2.5" width="11" height="19" rx="2.6"/><path d="M11 18.2h2"/>', 30), mailS: ic('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/>', 18), msgS: ic('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>', 18), key: ic('<circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7M17 6l2.5 2.5M14.5 8.5 16 10"/>', 18), bell: ic('<path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2 2 0 0 0 4 0"/>', 18), clock: ic('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 15), info: ic('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 16), pen: ic('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>', 14) };
-function ctView(){
-  if (CVV !== 'a') return ctViewN();
-  var E = ctE();
-  if (CT.st === 'in') return { eye: '', ttl: E ? 'Add your email' : 'Add your phone number', sub: E ? 'Enter your email and we’ll send you a 6-digit code to confirm it.' : 'Enter your number and we’ll text you a 6-digit code to confirm it.',
-    body: '<div class="ct-hero" aria-hidden="true"><span class="ct-badge">' + (E ? CTI.mail : CTI.phone) + '</span><span class="ct-pill"><i></i><i></i><i></i><b></b><i></i><i></i><i></i></span></div>'
-      + '<label class="iv-lbl" for="' + (E ? 'ct-e' : 'ct-p') + '">' + (E ? 'Email' : 'Phone number') + '</label>'
-      + (E ? '<div class="ct-in"><input id="ct-e" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" value="' + esc(CT.email) + '"></div>'
-           : '<div class="ct-in tel"><select id="ct-cc" aria-label="Country code">' + [['+34', '🇪🇸 +34'], ['+39', '🇮🇹 +39'], ['+44', '🇬🇧 +44'], ['+33', '🇫🇷 +33'], ['+49', '🇩🇪 +49'], ['+1', '🇺🇸 +1']].map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === CT.cc ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select><i></i><input id="ct-p" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="612 345 678" value="' + esc(CT.phone) + '" aria-label="Phone number"></div>')
-      + '<div class="ct-why"><span>' + (E ? CTI.key : CTI.bell) + '</span><p>' + (E ? '<b>Booking updates and your virtual keys go here</b>' : '<b>Your host uses this number only for urgent arrival updates</b>') + '</p></div>',
-    act: btn('ct-send', 'Send code', 'pri') };
-  var bx = ''; for (var k = 0; k < 6; k++) { if (k === 3) bx += '<span class="ct-dash" aria-hidden="true"></span>'; bx += '<span class="ct-d" data-k="' + k + '"></span>'; }
-  return { eye: '', ttl: E ? 'Check your email' : 'Check your messages', sub: 'We sent a 6-digit code ' + (E ? 'to' : 'by SMS to') + ' <b class="ct-to">' + ctMask() + '</b> <button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Change</button>',
-    body: '<div class="ct-card"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div>'
-      + '<div class="ct-otp" id="ct-otp"><input id="ct-i" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="6-digit code" value="' + CT.code + '"><div class="ct-row">' + bx + '</div></div>'
-      + '<div class="ct-st" id="ct-st" role="status" aria-live="polite"></div></div>'
-      + '<p class="ct-help">' + CTI.info + '<span>' + (E ? 'Can’t find it? Check your spam or promotions folder.' : 'Your phone may suggest the code above the keyboard.') + '</span></p>',
-    act: E ? btn('ct-mail', CTI.mailS + 'Open mail app', 'sec') : '' };
+var CTI = { mail: ic('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/>', 30), phone: ic('<rect x="6.5" y="2.5" width="11" height="19" rx="2.6"/><path d="M11 18.2h2"/>', 30), mailS: ic('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/>', 18), msgS: ic('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>', 18), key: ic('<circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7M17 6l2.5 2.5M14.5 8.5 16 10"/>', 18), bell: ic('<path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2 2 0 0 0 4 0"/>', 18), clock: ic('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 15), info: ic('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 16), pen: ic('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>', 14),
+  lock: ic('<rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>', 18), swap: ic('<path d="M7 7h11l-3-3M17 17H6l3 3"/>', 15) };
+/* WhatsApp: bocadillo con el teléfono dentro (icono genérico, no el logotipo) */
+CTI.wa = ic('<path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3 3l-4.5 1.5Z"/><path d="M9.2 8.6c.3-.6.7-.6 1-.6.3 0 .5.1.7.6l.6 1.4c.1.3 0 .5-.2.7l-.5.6c.6 1.1 1.5 2 2.6 2.6l.6-.5c.2-.2.4-.3.7-.2l1.4.6c.5.2.6.4.6.7 0 .3 0 .7-.6 1-.6.4-1.5.5-2.5.1a8.6 8.6 0 0 1-4.5-4.5c-.4-1-.3-1.9.1-2.5Z"/>', 18);
+CTI.waL = ic('<path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3 3l-4.5 1.5Z"/><path d="M9.2 8.6c.3-.6.7-.6 1-.6.3 0 .5.1.7.6l.6 1.4c.1.3 0 .5-.2.7l-.5.6c.6 1.1 1.5 2 2.6 2.6l.6-.5c.2-.2.4-.3.7-.2l1.4.6c.5.2.6.4.6.7 0 .3 0 .7-.6 1-.6.4-1.5.5-2.5.1a8.6 8.6 0 0 1-4.5-4.5c-.4-1-.3-1.9.1-2.5Z"/>', 30);
+function ctBig(){ return ctE() ? CTI.mail : CV === 'whatsapp' ? CTI.waL : CTI.phone; }
+function ctSmall(){ return ctE() ? CTI.mailS : ctWA() ? CTI.wa : CTI.msgS; }
+/* prefijos: el primero que se propone es el del país del documento escaneado */
+var DIAL = { ES: '+34', IT: '+39', GB: '+44', FR: '+33', DE: '+49', US: '+1', PT: '+351', NL: '+31', BE: '+32', IE: '+353', CH: '+41', AT: '+43', SE: '+46', DK: '+45', NO: '+47', FI: '+358', PL: '+48', RO: '+40', GR: '+30', MX: '+52', AR: '+54', BR: '+55', CA: '+1', AU: '+61' };
+var DIALO = ['ES', 'IT', 'GB', 'FR', 'DE', 'PT', 'NL', 'BE', 'IE', 'CH', 'AT', 'SE', 'DK', 'NO', 'FI', 'PL', 'RO', 'GR', 'US', 'CA', 'MX', 'AR', 'BR', 'AU'];
+function flag(c){ return String.fromCodePoint(127397 + c.charCodeAt(0), 127397 + c.charCodeAt(1)); }
+/* por qué lo pedimos: la misma explicación en todas las versiones, adaptada al canal */
+function ctCtx(cls){
+  var E = ctE(), W = CV === 'whatsapp';
+  var rows = E ? [[CTI.key, 'Your virtual keys and booking updates arrive here'], [CTI.bell, 'Your host can reach you if plans change']]
+    : W ? [[CTI.wa, 'Your host can message you on WhatsApp about your arrival'], [CTI.bell, 'Urgent updates only, like a late check-in or a change of access']]
+    : [[CTI.bell, 'Your host texts you only for urgent arrival updates'], [CTI.key, 'Like a late check-in or a change of access']];
+  rows.push([CTI.lock, 'Shared only with your host for this stay']);
+  return '<ul class="ct-ctx' + (cls ? ' ' + cls : '') + '">' + rows.map(function(r){ return '<li>' + r[0] + '<span>' + r[1] + '</span></li>'; }).join('') + '</ul>';
 }
+function ctSubIn(){ return 'Your host asks every guest to confirm ' + (ctE() ? 'an email' : CV === 'whatsapp' ? 'a WhatsApp number' : 'a mobile number') + '. We’ll send a 6-digit code ' + ctVia() + '.'; }
 
 /* ---- 4 versiones nuevas del paso de contacto (Controles › Paso de contacto) ---- */
 function ctOtpCard(kp){
@@ -222,106 +233,139 @@ function ctOtpCard(kp){
     + '<div class="ct-st" id="ct-st" role="status" aria-live="polite"></div></div>';
 }
 function ctAddr(){ return ctE() ? esc(CT.email) : esc(CT.cc + ' ' + CT.phone); }
-function ctField(){ var E = ctE(); return E ? '<div class="ct-in"><input id="ct-e" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" value="' + esc(CT.email) + '" aria-label="Email"></div>'
-  : '<div class="ct-in tel"><select id="ct-cc" aria-label="Country code">' + [['+34', '🇪🇸 +34'], ['+39', '🇮🇹 +39'], ['+44', '🇬🇧 +44'], ['+33', '🇫🇷 +33'], ['+49', '🇩🇪 +49'], ['+1', '🇺🇸 +1']].map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === CT.cc ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select><i></i><input id="ct-p" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="612 345 678" value="' + esc(CT.phone) + '" aria-label="Phone number"></div>'; }
-function ctHelp(){ return '<p class="ct-help">' + CTI.info + '<span>' + (ctE() ? 'Can’t find it? Check your spam or promotions folder.' : 'Your phone may suggest the code above the keyboard.') + '</span></p>'; }
+function ctField(){ var E = ctE(); return (E ? '<div class="ct-in"><input id="ct-e" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com" value="' + esc(CT.email) + '" aria-label="Email" aria-describedby="ct-hint"></div>'
+  : '<div class="ct-in tel"><select id="ct-cc" aria-label="Country code">' + DIALO.map(function(c){ return '<option value="' + c + '"' + (c === CT.ccc ? ' selected' : '') + '>' + flag(c) + ' ' + DIAL[c] + '</option>'; }).join('') + '</select><i></i><input id="ct-p" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="612 345 678" value="' + esc(CT.phone) + '" aria-label="' + ctLbl() + '" aria-describedby="ct-hint"></div>')
+  + '<p class="ct-hint" id="ct-hint" aria-live="polite"></p>'; }
+function ctHelp(){ return '<p class="ct-help">' + CTI.info + '<span>' + (ctE() ? 'Can’t find it? Check your spam or promotions folder.' : ctWA() ? 'Look for a chat from Chekin in WhatsApp. You need WhatsApp on this number.' : 'Your phone may suggest the code above the keyboard.') + '</span></p>'; }
+function ctActOpen(pri){ return ctE() ? btn('ct-mail', CTI.mailS + 'Open mail app', pri ? 'pri' : 'sec') : ctWA() ? btn('ct-mail', CTI.wa + 'Open WhatsApp', pri ? 'pri' : 'sec') : ''; }
+function ctView(){
+  if (CVV !== 'a') return ctViewN();
+  var E = ctE();
+  if (CT.st === 'in') return { eye: 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'We’ll send a new code ' + ctVia() + '.' : ctSubIn(),
+    body: '<div class="ct-hero" aria-hidden="true"><span class="ct-badge' + (CV === 'whatsapp' ? ' wa' : '') + '">' + ctBig() + '</span><span class="ct-pill"><i></i><i></i><i></i><b></b><i></i><i></i><i></i></span></div>'
+      + '<label class="iv-lbl" for="' + (E ? 'ct-e' : 'ct-p') + '">' + ctLbl() + '</label>' + ctField() + ctCtx(),
+    act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
+  return { eye: '', ttl: ctChkT(), sub: 'We sent a 6-digit code ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b> <button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Change</button>',
+    body: ctOtpCard() + ctHelp(), act: ctActOpen() };
+}
 function ctViewN(){
-  var E = ctE(), ico = E ? CTI.mailS : CTI.msgS;
-  /* 1 · Directo al código: el código ya se ha enviado al dato de la reserva; el dato se ve en una fila y se puede cambiar ahí mismo */
+  var E = ctE(), ico = ctSmall();
+  /* 1 · Directo: una sola pantalla; tras enviar, el dato pasa a una fila «Sent to … Edit» y la tarjeta del código aparece debajo */
   if (CVV === '1') {
     var edit = CT.st === 'in';
-    if (edit && !CT.sent) return { eye: '', ttl: E ? 'Add your email' : 'Add your phone number', sub: 'We’ll send a 6-digit code ' + (E ? 'to it' : 'by SMS') + ' — you’ll type it right here.', body: '<div class="n1-addr ed"><span class="n1-ic">' + ico + '</span><div class="n1-f">' + ctField() + '</div></div>', act: btn('ct-send', 'Send code', 'pri') };
-    return { eye: '', ttl: E ? 'Check your email' : 'Check your messages', sub: edit ? 'Fix it and we’ll send a new code.' : 'Enter the 6-digit code we just sent.',
-      body: '<div class="n1-addr' + (edit ? ' ed' : '') + '"><span class="n1-ic">' + ico + '</span>' + (edit ? '<div class="n1-f">' + ctField() + '</div>' : '<div class="n1-t"><small>Sent to</small><b>' + ctAddr() + '</b></div><button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Edit</button>') + '</div>'
+    if (edit && !CT.sent) return { eye: 'Last step', ttl: ctAddT(), sub: ctSubIn() + ' You’ll type it right here.', body: '<div class="n1-addr ed"><span class="n1-ic">' + ico + '</span><div class="n1-f">' + ctField() + '</div></div>' + ctCtx(), act: btn('ct-send', 'Send code', 'pri') };
+    return { eye: '', ttl: ctChkT(), sub: edit ? 'Fix it and we’ll send a new code.' : 'Enter the 6-digit code we just sent ' + ctVia() + '.',
+      body: '<div class="n1-addr' + (edit ? ' ed' : '') + '"><span class="n1-ic">' + ico + '</span>' + (edit ? '<div class="n1-f">' + ctField() + '</div>' : '<div class="n1-t"><small>Sent ' + ctVia() + ' to</small><b>' + ctAddr() + '</b></div><button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Edit</button>') + '</div>'
         + (edit ? '<div class="n1-acts">' + btn('ct-send', 'Send new code', 'pri', ' data-n="1"') + '<button type="button" class="n1-cancel" data-a="ct-cancel">Cancel</button></div>' : ctOtpCard() + ctHelp()),
-      act: !edit && E ? btn('ct-mail', CTI.mailS + 'Open mail app', 'sec') : '' };
+      act: !edit ? ctActOpen() : '' };
   }
-  /* 2 · Hoja de código: pantalla del dato en una sola tarjeta; el código se escribe en una hoja que sube desde abajo */
+  /* 2 · Hoja de código: el dato y el porqué en una tarjeta; el código se escribe en una hoja que sube desde abajo (diálogo centrado en escritorio) */
   if (CVV === '2') {
     var sheet = CT.st === 'code' ? '<div class="n2-bg" data-a="ct-edit"></div><div class="n2-sh" role="dialog" aria-modal="true" aria-label="Enter your code"><div class="n2-gr"></div><button type="button" class="n2-x" data-a="ct-edit" aria-label="Close">' + ic('<path d="M18 6 6 18M6 6l12 12"/>', 18) + '</button>'
-      + '<h2 class="n2-h">Enter the code</h2><p class="n2-s">Sent ' + (E ? 'to' : 'by SMS to') + ' <b class="ct-to">' + ctMask() + '</b></p>' + ctOtpCard() + ctHelp() + '</div>' : '';
-    return { eye: '', ttl: E ? 'Add your email' : 'Add your phone number', sub: 'One last thing before we verify you.',
-      body: '<div class="n2-card"><div class="n2-top"><span class="n2-ic">' + (E ? CTI.mail : CTI.phone) + '</span><div><b>' + (E ? 'Your email' : 'Your phone number') + '</b><span>We’ll send a 6-digit code to confirm it</span></div></div>' + ctField()
-        + '<ul class="n2-ben">' + (E ? '<li>' + CTI.key + 'Your virtual keys arrive here</li><li>' + CTI.bell + 'Booking updates from your host</li>' : '<li>' + CTI.bell + 'Only for urgent arrival updates from your host</li>') + '</ul></div>' + sheet,
-      act: btn('ct-send', 'Send code', 'pri') };
+      + '<h2 class="n2-h">Enter the code</h2><p class="n2-s">Sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b></p>' + ctOtpCard() + ctHelp() + (ctE() || ctWA() ? '<div class="n2-open">' + ctActOpen() + '</div>' : '') + '</div>' : '';
+    return { eye: 'Last step', ttl: ctAddT(), sub: 'One last thing before we verify you.',
+      body: '<div class="n2-card"><div class="n2-top"><span class="n2-ic' + (CV === 'whatsapp' ? ' wa' : '') + '">' + ctBig() + '</span><div><b>' + (E ? 'Your email' : CV === 'whatsapp' ? 'Your WhatsApp number' : 'Your mobile number') + '</b><span>Your host asks every guest for one. We’ll send a 6-digit code ' + ctVia() + '.</span></div></div>' + ctField()
+        + ctCtx('in-card') + '</div>' + sheet,
+      act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
   }
-  /* 3 · Pantalla inmersiva: tarjeta oscura con a quién se envió, casillas grandes y teclado numérico propio (sin que el teclado del sistema mueva la pantalla) */
+  /* 3 · Teclado: tarjeta oscura con a quién se envió, casillas grandes y teclado numérico propio en móvil */
   if (CVV === '3') {
-    if (CT.st === 'in') return { eye: '', ttl: CT.sent ? (E ? 'Change your email' : 'Change your phone number') : (E ? 'Add your email' : 'Add your phone number'), sub: CT.sent ? 'We’ll send a new code ' + (E ? 'to this email' : 'by SMS to this number') + '.' : 'We’ll send you a 6-digit code ' + (E ? 'by email' : 'by SMS') + ' to confirm it.', body: '<label class="iv-lbl">' + (E ? 'Email' : 'Phone number') + '</label>' + ctField(), act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
+    if (CT.st === 'in') return { eye: CT.sent ? '' : 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'We’ll send a new code ' + ctVia() + '.' : ctSubIn(), body: '<label class="iv-lbl">' + ctLbl() + '</label>' + ctField() + (CT.sent ? '' : ctCtx()), act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
     var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
-    return { eye: '', ttl: E ? 'Check your email' : 'Check your messages', sub: '',
-      body: '<div class="n3-hero"><span class="n3-ic">' + (E ? CTI.mail : CTI.phone) + '</span><div><small>Code sent ' + (E ? 'to' : 'by SMS to') + '</small><b>' + ctAddr() + '</b></div><button type="button" class="n3-chg" data-a="ct-edit">Change</button></div>'
+    return { eye: '', ttl: ctChkT(), sub: '',
+      body: '<div class="n3-hero"><span class="n3-ic">' + (ctE() ? CTI.mail : ctWA() ? CTI.waL : CTI.phone) + '</span><div><small>Code sent ' + ctTo() + '</small><b>' + ctAddr() + '</b></div><button type="button" class="n3-chg" data-a="ct-edit">Change</button></div>'
         + ctOtpCard(!DESK) + (DESK ? ctHelp() : '<div class="n3-kp" role="group" aria-label="Keypad">' + keys.map(function(k){ return k === '' ? '<span></span>' : '<button type="button" data-a="ct-k" data-k="' + k + '"' + (k === 'del' ? ' aria-label="Delete"' : '') + '>' + (k === 'del' ? ic('<path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/><path d="m16 9-5 6M11 9l5 6"/>', 22) : k) + '</button>'; }).join('') + '</div>'),
       act: '' };
   }
   /* 4 · Enlace o código: enviamos un enlace + código; al tocar el enlace seguimos solos; si no, se puede escribir el código */
-  if (CT.st === 'linked') return { eye: '', ttl: E ? 'Email verified' : 'Phone verified', sub: 'Thanks — ' + ctAddr() + ' is confirmed.', body: '<div class="iv-mid ok"><span class="iv-okc">' + I.ok + '</span><p class="iv-note go"><i class="iv-spin sm"></i>Finishing your verification…</p></div>', act: '' };
-  if (CT.st === 'in') return { eye: '', ttl: CT.sent ? (E ? 'Change your email' : 'Change your phone number') : (E ? 'Add your email' : 'Add your phone number'), sub: 'We’ll send you a link ' + (E ? 'by email' : 'by SMS') + ' — tap it and you’re done. A code comes with it, just in case.', body: '<label class="iv-lbl">' + (E ? 'Email' : 'Phone number') + '</label>' + ctField(), act: btn('ct-send', CT.sent ? 'Send new link' : 'Send link', 'pri') };
-  if (CT.st === 'code') return { eye: '', ttl: E ? 'Check your email' : 'Check your messages', sub: 'Enter the 6-digit code we sent ' + (E ? 'to' : 'by SMS to') + ' <b class="ct-to">' + ctMask() + '</b>.', body: ctOtpCard() + ctHelp(), act: btn('ct-wait', 'Use the link instead', 'sec') };
-  return { eye: '', ttl: E ? 'Confirm from your inbox' : 'Confirm from your messages', sub: '',
-    body: '<div class="n4-w"><div class="n4-rings" aria-hidden="true"><i></i><i></i><i></i><span class="n4-ic">' + (E ? CTI.mail : CTI.phone) + '</span></div>'
-      + '<p class="n4-t">We sent a link to <b>' + ctAddr() + '</b>.<br>Tap it and we’ll continue here automatically.</p>'
+  if (CT.st === 'linked') return { eye: '', ttl: E ? 'Email confirmed' : 'Number confirmed', sub: 'Thanks — ' + ctAddr() + ' is confirmed.', body: '<div class="iv-mid ok"><span class="iv-okc">' + I.ok + '</span><p class="iv-note go"><i class="iv-spin sm"></i>Finishing your verification…</p></div>', act: '' };
+  if (CT.st === 'in') return { eye: CT.sent ? '' : 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'We’ll send a new link ' + ctVia() + '.' : 'Your host asks every guest to confirm ' + (E ? 'an email' : CV === 'whatsapp' ? 'a WhatsApp number' : 'a mobile number') + '. We’ll send you a link ' + ctVia() + ' — tap it and you’re done. A code comes with it, just in case.', body: '<label class="iv-lbl">' + ctLbl() + '</label>' + ctField() + (CT.sent ? '' : ctCtx()), act: btn('ct-send', CT.sent ? 'Send new link' : 'Send link', 'pri') };
+  if (CT.st === 'code') return { eye: '', ttl: ctChkT(), sub: 'Enter the 6-digit code we sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b>.', body: ctOtpCard() + ctHelp(), act: btn('ct-wait', 'Use the link instead', 'sec') };
+  return { eye: '', ttl: E ? 'Confirm from your inbox' : ctWA() ? 'Confirm from WhatsApp' : 'Confirm from your messages', sub: '',
+    body: '<div class="n4-w"><div class="n4-rings" aria-hidden="true"><i></i><i></i><i></i><span class="n4-ic' + (ctWA() ? ' wa' : '') + '">' + (ctE() ? CTI.mail : ctWA() ? CTI.waL : CTI.phone) + '</span></div>'
+      + '<p class="n4-t">We sent a link ' + ctTo() + ' <b>' + ctAddr() + '</b>.<br>Tap it and we’ll continue here automatically.</p>'
       + '<span class="n4-chip"><i class="iv-spin sm"></i>Waiting for you to tap the link…</span>'
+      + (!E ? '<button type="button" class="n4-alt" data-a="ct-sw">' + (ctWA() ? 'No WhatsApp? <b>Send it by SMS</b>' : 'Prefer WhatsApp? <b>Send it there</b>') + '</button>' : '')
       + '<button type="button" class="n4-alt" data-a="ct-edit">Wrong ' + (E ? 'email' : 'number') + '? <b>Change it</b></button></div>',
-    act: (E ? btn('ct-mail', CTI.mailS + 'Open mail app', 'pri') : '') + btn('ct-code', 'Enter the code instead', E ? 'sec' : 'pri') };
+    act: ctActOpen(true) + btn('ct-code', 'Enter the code instead', E || ctWA() ? 'sec' : 'pri') };
 }
-function ctReset(){ ctStop(); CT.code = ''; CT.res = ''; CT.st = 'in'; CT.sent = false; CT.auto = false; }
+var CTMAX = 3;   /* intentos por código: al tercero fallido hay que pedir uno nuevo */
+function ctReset(){ ctStop(); CT.code = ''; CT.res = ''; CT.st = 'in'; CT.sent = false; CT.auto = false; CT.tries = 0; CH = CV === 'whatsapp' ? 'wa' : 'sms'; if (!CT.phone) { var c = S.c && DIAL[S.c] ? S.c : 'ES'; CT.ccc = c; CT.cc = DIAL[c]; } }
 function ctStop(){ clearInterval(CTT); clearTimeout(CTNF); ctNfHide(true); }
 function ctFmt(t){ return Math.floor(t / 60) + ':' + (t % 60 < 10 ? '0' : '') + (t % 60); }
+function ctSwLink(){ return ctE() ? '' : ' · <a data-a="ct-sw">' + (ctWA() ? 'Get it by SMS' : 'Get it on WhatsApp') + '</a>'; }
 function ctPaint(){
   var o = root && root.querySelector('#ct-otp'); if (!o) return;
-  var n = CT.code.length, foc = (document.activeElement && document.activeElement.id === 'ct-i') || (CVV === '3' && !DESK);
+  var n = CT.code.length, foc = (document.activeElement && document.activeElement.id === 'ct-i') || (CVV === '3' && !DESK), lock = CT.tries >= CTMAX && CT.res === 'err';
   [].forEach.call(o.querySelectorAll('.ct-d'), function(sp, k){ var ch = CT.code[k] || ''; if (sp.textContent !== ch) { sp.textContent = ch; if (ch) { sp.classList.remove('in'); void sp.offsetWidth; sp.classList.add('in'); } } sp.classList.toggle('cur', k === Math.min(n, 5) && !CT.res && foc && !(k < n)); });
-  o.className = 'ct-otp' + (CT.res ? ' ' + CT.res : '');
-  var st = root.querySelector('#ct-st'), E = ctE();
+  o.className = 'ct-otp' + (CT.res ? ' ' + CT.res : '') + (lock ? ' lock' : '');
+  var st = root.querySelector('#ct-st'), E = ctE(), left = CTMAX - CT.tries;
   if (st) { st.className = 'ct-st' + (CT.res ? ' ' + CT.res : '');
-    st.innerHTML = CT.res === 'chk' ? '<i class="iv-spin sm"></i>Checking code…' : CT.res === 'err' ? 'That code didn’t match — check the newest ' + (E ? 'email' : 'message') + ' and try again.' : CT.res === 'ok' ? I.okS + (E ? 'Email verified' : 'Phone number verified') : CT.exp <= 0 ? 'This code has expired. <a data-a="ct-resend">Send a new code</a>' : 'Didn’t get it? ' + (CT.left > 0 ? '<span class="off">Resend in ' + ctFmt(CT.left) + '</span>' : '<a data-a="ct-resend">Resend code</a>'); }
-  var ex = root.querySelector('#ct-exp'); if (ex) { ex.innerHTML = CT.res === 'ok' ? '' : CTI.clock + (CT.exp > 0 ? 'Expires in ' + ctFmt(CT.exp) : 'Expired'); ex.classList.toggle('low', CT.exp <= 30); }
+    st.innerHTML = CT.res === 'chk' ? '<i class="iv-spin sm"></i>Checking code…'
+      : lock ? 'Too many tries with this code. <a data-a="ct-resend">Send a new code</a>' + ctSwLink()
+      : CT.res === 'err' ? 'That code didn’t match. ' + left + ' ' + (left === 1 ? 'try' : 'tries') + ' left — check the newest ' + (E ? 'email' : 'message') + '.'
+      : CT.res === 'ok' ? I.okS + (E ? 'Email confirmed' : 'Number confirmed')
+      : CT.exp <= 0 ? 'This code has expired. <a data-a="ct-resend">Send a new code</a>' + ctSwLink()
+      : 'Didn’t get it? ' + (CT.left > 0 ? '<span class="off">Resend in ' + ctFmt(CT.left) + '</span>' : '<a data-a="ct-resend">Resend code</a>' + ctSwLink()); }
+  var ex = root.querySelector('#ct-exp'); if (ex) { ex.innerHTML = CT.res === 'ok' || lock ? '' : CTI.clock + (CT.exp > 0 ? 'Expires in ' + ctFmt(CT.exp) : 'Expired'); ex.classList.toggle('low', CT.exp <= 30); }
 }
 function ctTick(){ clearInterval(CTT); CTT = setInterval(function(){ if (S.step !== 'contact' || CT.st === 'linked') { clearInterval(CTT); return; } if (CT.left > 0) CT.left--; if (CT.exp > 0) CT.exp--; if (!CT.res || CT.res === 'err') ctPaint(); }, 1000); }
-function ctSendCode(){ CT.sent = true; CT.code = ''; CT.res = ''; CT.left = 30; CT.exp = 120; ctTick(); clearTimeout(CTNF); ctNfHide(true); CTNF = setTimeout(ctNfShow, 1600); }
+function ctSendCode(){ CT.sent = true; CT.code = ''; CT.res = ''; CT.tries = 0; CT.left = 30; CT.exp = ctE() ? 600 : 300; ctTick(); clearTimeout(CTNF); ctNfHide(true); CTNF = setTimeout(ctNfShow, 1600); }
 function ctNfShow(){
-  if (S.step !== 'contact' || (CT.st !== 'code' && CT.st !== 'wait') || CT.res === 'ok') return; ctNfHide(true); var E = ctE(), d = document.createElement('div');
+  if (S.step !== 'contact' || (CT.st !== 'code' && CT.st !== 'wait') || CT.res === 'ok') return; ctNfHide(true); var E = ctE(), W = ctWA(), d = document.createElement('div');
   d.className = 'ct-nf'; d.setAttribute('role', 'button'); d.setAttribute('aria-label', 'Use the code from this notification');
-  var lk = CVV === '4' && CT.st === 'wait';
-  d.innerHTML = '<span class="ct-nfi ' + (E ? 'm' : 's') + '">' + (E ? CTI.mailS : CTI.msgS) + '</span><div><b>' + (E ? 'Mail' : 'Messages') + '<small>now</small></b><strong>Chekin</strong><span>' + (lk ? 'Tap to confirm your ' + (E ? 'email' : 'number') + ': chk.in/v/7Qx2 · or use code ' : 'Your verification code is ') + CTCODE.slice(0, 3) + ' ' + CTCODE.slice(3) + '. It expires in 2 minutes.</span></div>';
+  var lk = CVV === '4' && CT.st === 'wait', cd = CTCODE.slice(0, 3) + ' ' + CTCODE.slice(3), mins = ctE() ? '10' : '5';
+  var txt = W ? (lk ? 'Tap to confirm your number: chk.in/v/7Qx2 · or use code ' + cd + '.' : '<em class="ct-nfb">' + cd + '</em> is your verification code. For your security, do not share this code.')
+    : (lk ? 'Tap to confirm your ' + (E ? 'email' : 'number') + ': chk.in/v/7Qx2 · or use code ' : 'Your verification code is ') + cd + '. It expires in ' + mins + ' minutes.';
+  d.innerHTML = '<span class="ct-nfi ' + (E ? 'm' : W ? 'w' : 's') + '">' + ctSmall() + '</span><div><b>' + (E ? 'Mail' : W ? 'WhatsApp' : 'Messages') + '<small>now</small></b><strong>Chekin</strong><span>' + txt + '</span></div>';
   d.addEventListener('click', function(){ if (CVV === '4' && CT.st === 'wait') { ctNfHide(); clearInterval(CTT); CT.st = 'linked'; CT.res = 'ok'; paint(); tm = setTimeout(function(){ finishIV(); }, 1600); return; } ctNfHide(); CT.code = CTCODE; CT.res = ''; var i = root.querySelector('#ct-i'); if (i) i.value = CTCODE; ctPaint(); ctCheck(); });
   document.body.appendChild(d); CTNF = setTimeout(function(){ ctNfHide(); }, 8000);
 }
 function ctNfHide(now){ [].forEach.call(document.querySelectorAll('.ct-nf'), function(d){ if (now) d.remove(); else { d.classList.add('out'); setTimeout(function(){ d.remove(); }, 300); } }); }
 function ctCheck(){
-  if (CT.code.length < 6 || CT.res === 'chk' || CT.res === 'ok') return;
+  if (CT.code.length < 6 || CT.res === 'chk' || CT.res === 'ok' || CT.tries >= CTMAX) return;
   CT.res = 'chk'; ctPaint();
   setTimeout(function(){
     if (S.step !== 'contact') return;
-    if (CTWRONG || CT.code !== CTCODE) { CT.res = 'err'; CTWRONG = false; if (window.__ctWrongSync) window.__ctWrongSync(); ctPaint(); var o = root.querySelector('#ct-otp'); if (o) { o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake'); } return; }
-    CT.res = 'ok'; ctNfHide(); clearInterval(CTT); ctPaint(); var h = root.querySelector('.iv-h'); if (h) h.textContent = ctE() ? 'Email verified' : 'Phone verified'; var sb = root.querySelector('.iv-sub'); if (sb) sb.innerHTML = 'Thanks — ' + (ctE() ? esc(CT.email) : esc(CT.cc + ' ' + CT.phone)) + ' is confirmed.';
+    if (CTWRONG || CT.code !== CTCODE) { CT.res = 'err'; CT.tries++; CTWRONG = false; if (window.__ctWrongSync) window.__ctWrongSync(); ctPaint(); var o = root.querySelector('#ct-otp'); if (o) { o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake'); } return; }
+    CT.res = 'ok'; ctNfHide(); clearInterval(CTT); ctPaint(); var h = root.querySelector('.iv-h'); if (h) h.textContent = ctE() ? 'Email confirmed' : 'Number confirmed'; var sb = root.querySelector('.iv-sub'); if (sb) sb.innerHTML = 'Thanks — ' + (ctE() ? esc(CT.email) : esc(CT.cc + ' ' + CT.phone)) + ' is confirmed.';
     var ft = root.querySelector('.iv-ft'); if (ft) ft.style.display = 'none';
     tm = setTimeout(function(){ finishIV(); }, 1300);
   }, 850);
 }
+/* errores de escritura frecuentes en el dominio del email: se sugiere el bueno debajo del campo */
+var CTDOM = { 'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co': 'gmail.com', 'gamil.com': 'gmail.com', 'gnail.com': 'gmail.com', 'gmail.con': 'gmail.com', 'hotmial.com': 'hotmail.com', 'hotmai.com': 'hotmail.com', 'hotmail.co': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'yahooo.com': 'yahoo.com', 'yaho.com': 'yahoo.com', 'outlok.com': 'outlook.com', 'outllok.com': 'outlook.com', 'icloud.co': 'icloud.com', 'iclod.com': 'icloud.com' };
 function ctBind(){
   if (CT.auto) { CT.auto = false; ctSendCode(); }
   var i = root.querySelector('#ct-i');
   if (i) {
-    i.addEventListener('input', function(){ var v = i.value.replace(/\D/g, '').slice(0, 6); if (CT.res === 'err') { v = v.slice(-1); CT.res = ''; } if (CT.res === 'ok' || CT.res === 'chk') { i.value = CT.code; return; } CT.code = v; i.value = v; ctPaint(); if (v.length === 6) ctCheck(); });
+    i.addEventListener('input', function(){ var v = i.value.replace(/\D/g, '').slice(0, 6); if (CT.tries >= CTMAX && CT.res === 'err') { i.value = ''; return; } if (CT.res === 'err') { v = v.slice(-1); CT.res = ''; } if (CT.res === 'ok' || CT.res === 'chk') { i.value = CT.code; return; } CT.code = v; i.value = v; ctPaint(); if (v.length === 6) ctCheck(); });
     i.addEventListener('focus', ctPaint); i.addEventListener('blur', ctPaint);
-    if (!DESK || true) setTimeout(function(){ if (i.isConnected) { try { i.focus({ preventScroll: true }); } catch (e) {} ctPaint(); } }, 80);
+    setTimeout(function(){ if (i.isConnected) { try { i.focus({ preventScroll: true }); } catch (e) {} ctPaint(); } }, 80);
     ctPaint();
   }
-  var e = root.querySelector('#ct-e'), p = root.querySelector('#ct-p'), c = root.querySelector('#ct-cc'), sb = root.querySelector('[data-a="ct-send"]');
-  function ok(){ if (!sb) return; sb.disabled = e ? !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(e.value.trim()) : (p.value.replace(/\D/g, '').length < 6); }
-  if (e) e.addEventListener('input', function(){ CT.email = e.value.trim(); ok(); });
-  if (p) p.addEventListener('input', function(){ CT.phone = p.value.trim(); ok(); });
-  if (c) c.addEventListener('change', function(){ CT.cc = c.value; });
+  var e = root.querySelector('#ct-e'), p = root.querySelector('#ct-p'), c = root.querySelector('#ct-cc'), sb = root.querySelector('[data-a="ct-send"]'), hint = root.querySelector('#ct-hint'), touched = false;
+  function valid(){ return e ? /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(e.value.trim()) : p.value.replace(/\D/g, '').length >= 6; }
+  function sug(){ if (!e) return ''; var v = e.value.trim().toLowerCase(), at = v.lastIndexOf('@'); if (at < 1) return ''; var fix = CTDOM[v.slice(at + 1)]; return fix ? e.value.trim().slice(0, at + 1) + fix : ''; }
+  function hintP(){ if (!hint) return; var s = sug(), bad = touched && !valid() && (e ? e.value.trim() : p.value.trim());
+    hint.className = 'ct-hint' + (s ? ' sug' : bad ? ' err' : '');
+    hint.innerHTML = s ? 'Did you mean <button type="button" data-a="ct-fix" data-v="' + esc(s) + '">' + esc(s) + '</button>?'
+      : bad ? (e ? 'This email looks incomplete — check it before we send the code.' : 'This number looks too short. Add it without the country code.') : ''; }
+  function ok(){ if (sb) sb.disabled = !valid(); hintP(); }
+  if (e) { e.addEventListener('input', function(){ CT.email = e.value.trim(); ok(); }); e.addEventListener('blur', function(){ touched = true; hintP(); }); }
+  if (p) { p.addEventListener('input', function(){ CT.phone = p.value.trim(); ok(); }); p.addEventListener('blur', function(){ touched = true; hintP(); }); }
+  if (c) c.addEventListener('change', function(){ CT.ccc = c.value; CT.cc = DIAL[c.value]; });
+  if (hint) hint.addEventListener('click', function(ev){ var b = ev.target.closest('[data-a="ct-fix"]'); if (!b || !e) return; ev.stopPropagation(); e.value = b.getAttribute('data-v'); CT.email = e.value; ok(); });
   ok();
 }
 function ctAct(a, t){
+  if (a === 'ct-fix') return;
   if (a === 'ct-send') { CT.st = CVV === '4' ? 'wait' : 'code'; paint(); ctSendCode(); ctPaint(); return; }
   if (a === 'ct-cancel') { CT.st = 'code'; paint(); ctTick(); ctPaint(); return; }
   if (a === 'ct-code') { CT.st = 'code'; CT.code = ''; CT.res = ''; paint(); ctPaint(); return; }
   if (a === 'ct-wait') { CT.st = 'wait'; CT.code = ''; CT.res = ''; paint(); return; }
-  if (a === 'ct-k') { if (CT.res === 'chk' || CT.res === 'ok') return; var k = t.getAttribute('data-k'); if (CT.res === 'err') { CT.code = ''; CT.res = ''; } CT.code = k === 'del' ? CT.code.slice(0, -1) : (CT.code + k).slice(0, 6); var ii = root.querySelector('#ct-i'); if (ii) ii.value = CT.code; ctPaint(); if (CT.code.length === 6) ctCheck(); return; }
+  if (a === 'ct-sw') { CH = CH === 'wa' ? 'sms' : 'wa'; ctSendCode(); paint(); ctPaint(); return; }   /* mismo número, el otro canal: nuevo código */
+  if (a === 'ct-k') { if (CT.res === 'chk' || CT.res === 'ok' || CT.tries >= CTMAX && CT.res === 'err') return; var k = t.getAttribute('data-k'); if (CT.res === 'err') { CT.code = ''; CT.res = ''; } CT.code = k === 'del' ? CT.code.slice(0, -1) : (CT.code + k).slice(0, 6); var ii = root.querySelector('#ct-i'); if (ii) ii.value = CT.code; ctPaint(); if (CT.code.length === 6) ctCheck(); return; }
   if (a === 'ct-edit') { if (CVV === '1' || CVV === '3' || CVV === 'a' || CVV === '4') { clearTimeout(CTNF); ctNfHide(true); } else ctStop(); if (CVV !== '1') clearInterval(CTT); CT.st = 'in'; CT.res = ''; if (CVV !== '1') CT.code = ''; return paint(); }
   if (a === 'ct-resend') { ctSendCode(); var i = root.querySelector('#ct-i'); if (i) { i.value = ''; try { i.focus({ preventScroll: true }); } catch (e) {} } ctPaint(); return; }
   if (a === 'ct-mail') { clearTimeout(CTNF); ctNfShow(); return; }
@@ -525,7 +569,7 @@ function paint(){
   root.className = 'iv-m iv-s-' + S.step + (v.err ? ' iv-err' : '');
   var sk = ['doc', 'intro', 'cam', 'error'].indexOf(S.step) >= 0;   /* «Skip for now» se mantiene en el mismo sitio (a la derecha del título) hasta el formulario */
   var dtop = DESK ? '<div class="dbk-row iv-dtop"><button type="button" class="dbk-pill" data-a="prev" data-dbk="Back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><i class="dbk-sep" aria-hidden="true">/</i><span class="dbk-eye">Identity verification' + (stepLabel() ? ' · ' + stepLabel() : '') + '</span></div>' : '';
-  var head = dtop + '<div class="iv-hr' + (sk ? ' hs' : '') + '"><h1 class="iv-h">' + v.ttl + '</h1>' + (sk ? '<button type="button" class="iv-skipb" data-a="skip">Skip for now</button>' : '') + '</div>' + (v.sub ? '<p class="iv-sub">' + v.sub + '</p>' : '');
+  var head = dtop + '' + (v.eye ? '<p class="iv-eye">' + v.eye + '</p>' : '') + '<div class="iv-hr' + (sk ? ' hs' : '') + '"><h1 class="iv-h">' + v.ttl + '</h1>' + (sk ? '<button type="button" class="iv-skipb" data-a="skip">Skip for now</button>' : '') + '</div>' + (v.sub ? '<p class="iv-sub">' + v.sub + '</p>' : '');
   if (keep) {   /* intro ⇄ cámara: se conserva el marco y solo cambian el título y los botones */
     var tmp = document.createElement('div'); tmp.innerHTML = head;
     [].slice.call(main.children).forEach(function(n){ if (!n.classList.contains('iv-prepw')) main.removeChild(n); });
@@ -623,9 +667,9 @@ function railPaint(force){
   asd.classList.add('fx-nointro');
   var pr = priv.cloneNode(true); var pic = pr.querySelector('span'); if (pic && pic.querySelector('svg')) pic.parentNode.removeChild(pic); pr.querySelector('strong').textContent = 'Where you are in your registration'; var pd = pr.querySelector('strong').nextElementSibling; if (pd) pd.textContent = 'A few quick steps — we\'ll guide you through each one.';
   var animFrom = (RPC !== null && RPC < cur) ? RPC : null; RPC = cur;
-  var tipsL = P.map(function(p, i){ return 'Step ' + (i + 1) + ' · ' + (p.k === 'selfie' ? 'Selfie (biometrics)' : p.k === 'back' ? 'Back side photo' : p.k === 'page' ? 'Photo page' : 'Front side photo'); }); if (CV !== 'off') tipsL.push('Step ' + (P.length + 1) + ' · ' + (CV === 'sms' ? 'Phone number' : 'Email') + ' verification'); tipsL.push('Step ' + (P.length + (CV !== 'off' ? 2 : 1)) + ' · Your details');
+  var tipsL = P.map(function(p, i){ return 'Step ' + (i + 1) + ' · ' + (p.k === 'selfie' ? 'Selfie (biometrics)' : p.k === 'back' ? 'Back side photo' : p.k === 'page' ? 'Photo page' : 'Front side photo'); }); if (CV !== 'off') tipsL.push('Step ' + (P.length + 1) + ' · ' + (CV === 'email' ? 'Email' : CV === 'whatsapp' ? 'WhatsApp number' : 'Phone number') + ' verification'); tipsL.push('Step ' + (P.length + (CV !== 'off' ? 2 : 1)) + ' · Your details');
   try { localStorage.setItem('rep-ivtips', JSON.stringify(tipsL)); } catch (e) {}
-  var kinds = n === 1 ? (P[0].k === 'back' ? ['scan'] : ['id']) : P.map(function(p){ return p.k === 'selfie' ? 'who' : p.k === 'back' ? 'scan' : 'id'; }); if (CV !== 'off') kinds.push(CV === 'sms' ? 'sms' : 'mail'); kinds.push('doc');
+  var kinds = n === 1 ? (P[0].k === 'back' ? ['scan'] : ['id']) : P.map(function(p){ return p.k === 'selfie' ? 'who' : p.k === 'back' ? 'scan' : 'id'; }); if (CV !== 'off') kinds.push(CV === 'email' ? 'mail' : 'sms'); kinds.push('doc');
   try { localStorage.setItem('rep-ivkinds', kinds.join(',')); } catch (e) {}
   var st = '<div class="iv-vst" role="img" aria-label="' + stepLabel() + '">' + kinds.map(function(k, i){ var cs0 = animFrom !== null ? animFrom : cur; var cls = i < cs0 ? 'done' : i === cs0 ? 'now' : ''; return (i ? '<i class="iv-vl' + (i <= cs0 ? ' on' : '') + '"></i>' : '') + '<span class="iv-vc ' + cls + '" tabindex="0" data-tip="' + tipsL[i] + '"><b>' + rsvg(i < cs0 ? RI.ok : RI[k], 20) + '</b></span>'; }).join('') + '</div>';
   var body = pr.querySelector('.min-w-0'); if (body) body.insertAdjacentHTML('beforeend', st);

@@ -531,9 +531,9 @@ if (!EMBED) {
     var m = b.getAttribute('data-ivs'); LSset('rep-iv', m === 'no' ? '0' : '1'); if (m !== 'no') LSset('rep-ivm', m);
     var q = new URLSearchParams(location.search); q.delete('iv'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); try { sessionStorage.setItem('rep-keep-reload', '1'); } catch (x) {} location.reload();
   }, true);
-  /* verificación de contacto al final de la IV: No · Email · SMS (un solo canal). Por defecto, email */
-  var cvNow = LSget('rep-ivcv', 'email'); if (['off', 'email', 'sms'].indexOf(cvNow) < 0) cvNow = 'email';
-  var cvs = seg([['off', 'Off'], ['email', 'Email'], ['sms', 'SMS']].map(function(x){ return '<button type="button" class="rs-chip' + (x[0] === cvNow ? ' on' : '') + '" data-cvs="' + x[0] + '">' + x[1] + '</button>'; }).join(''));
+  /* verificación de contacto al final de la IV: No · Email · SMS · WhatsApp (un solo canal). Por defecto, email */
+  var cvNow = LSget('rep-ivcv', 'email'); if (['off', 'email', 'sms', 'whatsapp'].indexOf(cvNow) < 0) cvNow = 'email';
+  var cvs = seg([['off', 'Off'], ['email', 'Email'], ['sms', 'SMS'], ['whatsapp', 'WhatsApp']].map(function(x){ return '<button type="button" class="rs-chip' + (x[0] === cvNow ? ' on' : '') + '" data-cvs="' + x[0] + '">' + x[1] + '</button>'; }).join(''));
   cvs.addEventListener('click', function(e){
     var b = e.target.closest('[data-cvs]'); if (!b) return; e.preventDefault(); e.stopPropagation();
     LSset('rep-ivcv', b.getAttribute('data-cvs')); try { sessionStorage.setItem('rep-keep-reload', '1'); } catch (x) {} location.reload();
