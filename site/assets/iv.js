@@ -19,7 +19,7 @@ var TRIES = 0;
 /* verificación de contacto al final de la IV (Controles › Verificar contacto): 'off' · 'email' · 'sms' · 'whatsapp' — el anfitrión elige un canal */
 var CV = 'email'; try { CV = localStorage.getItem('rep-ivcv') || 'email'; } catch (e) {} if (['off', 'email', 'sms', 'whatsapp'].indexOf(CV) < 0) CV = 'email';
 var CH = CV === 'whatsapp' ? 'wa' : 'sms';   /* canal real del código cuando es un móvil: el huésped puede cambiar SMS ⇄ WhatsApp */
-var CVV = 'a'; try { CVV = localStorage.getItem('rep-ivcvv') || 'a'; } catch (e) {} if (['a', '1', '2', '3', '4'].indexOf(CVV) < 0) CVV = 'a';
+var CVV = 'a'; try { CVV = localStorage.getItem('rep-ivcvv') || 'a'; } catch (e) {} if (['a', '1', '2', '3', '4', '5'].indexOf(CVV) < 0) CVV = 'a';
 var CT = { st: 'in', code: '', res: '', left: 0, exp: 0, email: '', cc: '+34', ccc: 'ES', phone: '', sent: false, tries: 0 }, CTCODE = CV === 'email' ? '482791' : '913604', CTWRONG = false, CTT = 0, CTNF = 0;
 /* duración simulada de la verificación en segundos (0 = no termina nunca: se queda al 99 %) */
 var VT = 5; try { var vtv = localStorage.getItem('rep-iv-t'); if (vtv !== null) VT = Number(vtv); } catch (e) {}
@@ -198,7 +198,7 @@ function ctE(){ return CV === 'email'; }
 function ctWA(){ return !ctE() && CH === 'wa'; }
 function ctVia(){ return ctE() ? 'by email' : ctWA() ? 'on WhatsApp' : 'by SMS'; }
 function ctTo(){ return ctE() ? 'to' : ctWA() ? 'on WhatsApp to' : 'by SMS to'; }
-function ctAddT(){ return ctE() ? 'Add your email' : CV === 'whatsapp' ? 'Add your WhatsApp number' : 'Add your phone number'; }
+function ctAddT(){ return ctE() ? 'Add your email' : CV === 'whatsapp' ? 'Add your WhatsApp number' : 'Add your mobile number'; }
 function ctChgT(){ return ctE() ? 'Change your email' : 'Change your number'; }
 function ctChkT(){ return ctE() ? 'Check your email' : ctWA() ? 'Check WhatsApp' : 'Check your messages'; }
 function ctLbl(){ return ctE() ? 'Email' : CV === 'whatsapp' ? 'WhatsApp number' : 'Mobile number'; }
@@ -224,7 +224,7 @@ function ctOtpCard(kp){
     + '<div class="ct-otp" id="ct-otp"><input id="ct-i" type="text" inputmode="' + (kp ? 'none' : 'numeric') + '" autocomplete="one-time-code" maxlength="6" aria-label="6-digit code" value="' + CT.code + '"' + (kp ? ' readonly' : '') + '><div class="ct-row">' + bx + '</div></div>'
     + '<div class="ct-st" id="ct-st" role="status" aria-live="polite"></div></div>';
 }
-function ctAddr(){ return ctE() ? esc(CT.email) : esc(CT.cc + ' ' + CT.phone); }
+function ctAddr(){ return ctE() ? esc(CT.email) : esc(CT.cc + ' ' + CT.phone.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')); }
 function ctField(){ var E = ctE(); return (E ? '<div class="ct-in"><input id="ct-e" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com" value="' + esc(CT.email) + '" aria-label="Email" aria-describedby="ct-hint"></div>'
   : '<div class="ct-in tel"><select id="ct-cc" aria-label="Country code">' + DIALO.map(function(c){ return '<option value="' + c + '"' + (c === CT.ccc ? ' selected' : '') + '>' + flag(c) + ' ' + DIAL[c] + '</option>'; }).join('') + '</select><i></i><input id="ct-p" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="612 345 678" value="' + esc(CT.phone) + '" aria-label="' + ctLbl() + '" aria-describedby="ct-hint"></div>')
   + '<p class="ct-hint" id="ct-hint" aria-live="polite"></p>'; }
@@ -240,7 +240,33 @@ function ctView(){
   return { eye: '', ttl: ctChkT(), sub: 'A 6-digit code was sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b> <button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Change</button>',
     body: ctOtpCard() + ctHelp(), act: ctActOpen() };
 }
+/* ---- 5 · Native: como los verificadores de WhatsApp, iOS/Android, Twilio Verify o Uber ----
+   1) país en su propia fila + número grande · 2) «¿Es correcto?» antes de enviar · 3) código en una línea que se comprueba solo,
+   sugerencia del código encima del teclado (autorrelleno del sistema) y «Didn’t get the code?» con reenviar / otro canal / llamada, cada uno con su cuenta atrás */
+function ctCName(c){ return (CATBY[c] && CATBY[c][1]) || { CA: 'Canada', AU: 'Australia', US: 'United States', GB: 'United Kingdom' }[c] || c; }
+function ctV5(){
+  var E = ctE(), W = ctWA(), chev = ic('<path d="m9 6 6 6-6 6"/>', 16);
+  if (CT.st === 'in' || CT.st === 'confirm') {
+    var f = E ? '<label class="iv-lbl" for="ct-e">Email</label><div class="n5-num em"><input id="ct-e" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com" value="' + esc(CT.email) + '" aria-describedby="ct-hint"></div><p class="ct-hint" id="ct-hint" aria-live="polite"></p>'
+      : '<label class="iv-lbl" for="ct-cc">Country</label><label class="n5-cty"><span class="n5-fl" aria-hidden="true">' + flag(CT.ccc) + '</span><span class="n5-cn">' + esc(ctCName(CT.ccc)) + '</span>' + chev + '<select id="ct-cc" aria-label="Country">' + DIALO.slice().sort(function(a, b){ return ctCName(a) < ctCName(b) ? -1 : 1; }).map(function(c){ return '<option value="' + c + '"' + (c === CT.ccc ? ' selected' : '') + '>' + esc(ctCName(c)) + ' (' + DIAL[c] + ')</option>'; }).join('') + '</select></label>'
+        + '<label class="iv-lbl" for="ct-p">' + ctLbl() + '</label><div class="n5-num"><span class="n5-pre">' + CT.cc + '</span><i></i><input id="ct-p" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="612 345 678" value="' + esc(CT.phone) + '" aria-describedby="ct-hint"></div><p class="ct-hint" id="ct-hint" aria-live="polite"></p>';
+    var conf = CT.st === 'confirm' ? '<div class="n2-bg" data-a="ct-edit"></div><div class="n5-cf" role="dialog" aria-modal="true" aria-labelledby="n5-cfv"><span class="n5-cfi' + (W ? ' wa' : '') + '">' + ctSmall() + '</span><p class="n5-cfk">' + (E ? 'Is this email correct?' : 'Is this number correct?') + '</p><b id="n5-cfv" class="n5-cfv">' + ctAddr() + '</b><p class="n5-cfs">The 6-digit code will be sent ' + ctVia() + '.</p><div class="n5-cfa"><button type="button" class="iv-b sec" data-a="ct-edit">Edit</button>' + btn('ct-send', 'Yes, send code', 'pri') + '</div></div>' : '';
+    return { eye: 'Last step', ttl: ctAddT(), sub: 'A 6-digit code will be sent ' + (E ? 'to this email' : ctVia()) + ' to confirm it.', body: f + conf, act: btn('ct-next', 'Continue', 'pri') };
+  }
+  var bx = ''; for (var k = 0; k < 6; k++) { if (k === 3) bx += '<span class="n5-gap" aria-hidden="true"></span>'; bx += '<span class="ct-d" data-k="' + k + '"></span>'; }
+  var rows = E ? [['ct-resend', CTI.mailS, 'Resend email', 'left'], ['ct-mail', CTI.mailS, 'Open mail app', ''], ['ct-edit', CTI.pen, 'Use a different email', '']]
+    : [['ct-resend', W ? CTI.wa : CTI.msgS, W ? 'Resend on WhatsApp' : 'Resend SMS', 'left'], ['ct-sw', W ? CTI.msgS : CTI.wa, W ? 'Get it by SMS instead' : 'Get it on WhatsApp instead', 'left'], ['ct-call', ic('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>', 18), 'Call me with the code', 'cl']];
+  return { eye: '', ttl: E ? 'Verify your email' : 'Verify your number', sub: 'Enter the 6-digit code sent ' + ctTo() + ' <b class="ct-to">' + ctAddr() + '</b>. <button type="button" class="n5-wr" data-a="ct-edit">Wrong ' + (E ? 'email' : 'number') + '?</button>',
+    body: '<div class="ct-otp n5-otp" id="ct-otp"><input id="ct-i" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="6-digit code" value="' + CT.code + '"><div class="ct-row">' + bx + '</div></div>'
+      + '<div class="ct-st" id="ct-st" role="status" aria-live="polite"></div>'
+      + '<p class="n5-lh">Didn’t get the code?</p><div class="n5-rs">' + rows.map(function(r){ return '<button type="button" class="n5-r" data-a="' + r[0] + '" data-t="' + r[3] + '">' + r[1] + '<span>' + r[2] + '</span><em class="n5-tm"></em></button>'; }).join('') + '</div>',
+    act: '' };
+}
+function ctPaint5(){
+  [].forEach.call(root.querySelectorAll('.n5-r'), function(b){ var t = b.getAttribute('data-t'), v = t === 'left' ? CT.left : t === 'cl' ? CT.cl : 0; b.disabled = v > 0 || CT.res === 'ok'; b.querySelector('.n5-tm').textContent = v > 0 ? ctFmt(v) : ''; });
+}
 function ctViewN(){
+  if (CVV === '5') return ctV5();
   var E = ctE(), ico = ctSmall();
   /* 1 · Directo: una sola pantalla; tras enviar, el dato pasa a una fila «Sent to … Edit» y la tarjeta del código aparece debajo */
   if (CVV === '1') {
@@ -280,7 +306,7 @@ function ctViewN(){
       + '<button type="button" class="n4-alt" data-a="ct-edit">Wrong ' + (E ? 'email' : 'number') + '? <b>Change it</b></button></div>',
     act: ctActOpen(true) + btn('ct-code', 'Enter the code instead', E || ctWA() ? 'sec' : 'pri') };
 }
-var CTMAX = 3;   /* intentos por código: al tercero fallido hay que pedir uno nuevo */
+var CTMAX = 3, CTCALL = false;   /* intentos por código: al tercero fallido hay que pedir uno nuevo */
 function ctReset(){ ctStop(); CT.code = ''; CT.res = ''; CT.st = 'in'; CT.sent = false; CT.auto = false; CT.tries = 0; CH = CV === 'whatsapp' ? 'wa' : 'sms'; if (!CT.phone) { var c = S.c && DIAL[S.c] ? S.c : 'ES'; CT.ccc = c; CT.cc = DIAL[c]; } }
 function ctStop(){ clearInterval(CTT); clearTimeout(CTNF); ctNfHide(true); }
 function ctFmt(t){ return Math.floor(t / 60) + ':' + (t % 60 < 10 ? '0' : '') + (t % 60); }
@@ -289,7 +315,7 @@ function ctPaint(){
   var o = root && root.querySelector('#ct-otp'); if (!o) return;
   var n = CT.code.length, foc = (document.activeElement && document.activeElement.id === 'ct-i') || (CVV === '3' && !DESK), lock = CT.tries >= CTMAX && CT.res === 'err';
   [].forEach.call(o.querySelectorAll('.ct-d'), function(sp, k){ var ch = CT.code[k] || ''; if (sp.textContent !== ch) { sp.textContent = ch; if (ch) { sp.classList.remove('in'); void sp.offsetWidth; sp.classList.add('in'); } } sp.classList.toggle('cur', k === Math.min(n, 5) && !CT.res && foc && !(k < n)); });
-  o.className = 'ct-otp' + (CT.res ? ' ' + CT.res : '') + (lock ? ' lock' : '');
+  o.className = 'ct-otp' + (CVV === '5' ? ' n5-otp' : '') + (CT.res ? ' ' + CT.res : '') + (lock ? ' lock' : '');
   var st = root.querySelector('#ct-st'), E = ctE(), left = CTMAX - CT.tries;
   if (st) { st.className = 'ct-st' + (CT.res ? ' ' + CT.res : '');
     st.innerHTML = CT.res === 'chk' ? '<i class="iv-spin sm"></i>Checking code…'
@@ -298,19 +324,24 @@ function ctPaint(){
       : CT.res === 'ok' ? I.okS + (E ? 'Email confirmed' : 'Number confirmed')
       : CT.exp <= 0 ? 'This code has expired. <a data-a="ct-resend">Send a new code</a>' + ctSwLink()
       : 'Didn’t get it? ' + (CT.left > 0 ? '<span class="off">Resend in ' + ctFmt(CT.left) + '</span>' : '<a data-a="ct-resend">Resend code</a>' + ctSwLink()); }
+  if (CVV === '5' && st && !CT.res && CT.exp > 0) st.innerHTML = '';
+  if (CVV === '5') ctPaint5();
   var ex = root.querySelector('#ct-exp'); if (ex) { ex.innerHTML = CT.res === 'ok' || lock ? '' : CTI.clock + (CT.exp > 0 ? 'Expires in ' + ctFmt(CT.exp) : 'Expired'); ex.classList.toggle('low', CT.exp <= 30); }
 }
-function ctTick(){ clearInterval(CTT); CTT = setInterval(function(){ if (S.step !== 'contact' || CT.st === 'linked') { clearInterval(CTT); return; } if (CT.left > 0) CT.left--; if (CT.exp > 0) CT.exp--; if (!CT.res || CT.res === 'err') ctPaint(); }, 1000); }
-function ctSendCode(){ CT.sent = true; CT.code = ''; CT.res = ''; CT.tries = 0; CT.left = 30; CT.exp = ctE() ? 600 : 300; ctTick(); clearTimeout(CTNF); ctNfHide(true); CTNF = setTimeout(ctNfShow, 1600); }
+function ctTick(){ clearInterval(CTT); CTT = setInterval(function(){ if (S.step !== 'contact' || CT.st === 'linked') { clearInterval(CTT); return; } if (CT.left > 0) CT.left--; if (CT.cl > 0) CT.cl--; if (CT.exp > 0) CT.exp--; if (!CT.res || CT.res === 'err') ctPaint(); }, 1000); }
+function ctSendCode(){ CT.sent = true; CT.code = ''; CT.res = ''; CT.tries = 0; CT.left = 30; CT.cl = 60; CT.exp = ctE() ? 600 : 300; ctTick(); clearTimeout(CTNF); ctNfHide(true); CTNF = setTimeout(ctNfShow, 1600); }
 function ctNfShow(){
   if (S.step !== 'contact' || (CT.st !== 'code' && CT.st !== 'wait') || CT.res === 'ok') return; ctNfHide(true); var E = ctE(), W = ctWA(), d = document.createElement('div');
   d.className = 'ct-nf'; d.setAttribute('role', 'button'); d.setAttribute('aria-label', 'Use the code from this notification');
+  if (CVV === '5' && !DESK && CTCALL) { CTCALL = false; d.className = 'ct-nf'; d.innerHTML = '<span class="ct-nfi s">' + ic('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>', 18) + '</span><div><b>Phone<small>now</small></b><strong>Chekin · automated call</strong><span>Your code is ' + CTCODE.split('').join(' ') + '.</span></div>'; }
+  else if (CVV === '5' && !DESK) { d.className = 'ct-nf n5-kb'; d.setAttribute('aria-label', 'Fill in the code ' + CTCODE); d.innerHTML = '<small>From ' + (E ? 'Mail' : W ? 'WhatsApp' : 'Messages') + '</small><b>' + CTCODE + '</b>'; }
+  else {
   var lk = CVV === '4' && CT.st === 'wait', cd = CTCODE.slice(0, 3) + ' ' + CTCODE.slice(3), mins = ctE() ? '10' : '5';
   var txt = W ? (lk ? 'Tap to confirm your number: chk.in/v/7Qx2 · or use code ' + cd + '.' : '<em class="ct-nfb">' + cd + '</em> is your verification code. For your security, do not share this code.')
     : (lk ? 'Tap to confirm your ' + (E ? 'email' : 'number') + ': chk.in/v/7Qx2 · or use code ' : 'Your verification code is ') + cd + '. It expires in ' + mins + ' minutes.';
-  d.innerHTML = '<span class="ct-nfi ' + (E ? 'm' : W ? 'w' : 's') + '">' + ctSmall() + '</span><div><b>' + (E ? 'Mail' : W ? 'WhatsApp' : 'Messages') + '<small>now</small></b><strong>Chekin</strong><span>' + txt + '</span></div>';
+  d.innerHTML = '<span class="ct-nfi ' + (E ? 'm' : W ? 'w' : 's') + '">' + ctSmall() + '</span><div><b>' + (E ? 'Mail' : W ? 'WhatsApp' : 'Messages') + '<small>now</small></b><strong>Chekin</strong><span>' + txt + '</span></div>'; }
   d.addEventListener('click', function(){ if (CVV === '4' && CT.st === 'wait') { ctNfHide(); clearInterval(CTT); CT.st = 'linked'; CT.res = 'ok'; paint(); tm = setTimeout(function(){ finishIV(); }, 1600); return; } ctNfHide(); CT.code = CTCODE; CT.res = ''; var i = root.querySelector('#ct-i'); if (i) i.value = CTCODE; ctPaint(); ctCheck(); });
-  document.body.appendChild(d); CTNF = setTimeout(function(){ ctNfHide(); }, 8000);
+  document.body.appendChild(d); if (d.className.indexOf('n5-kb') < 0) CTNF = setTimeout(function(){ ctNfHide(); }, 8000);
 }
 function ctNfHide(now){ [].forEach.call(document.querySelectorAll('.ct-nf'), function(d){ if (now) d.remove(); else { d.classList.add('out'); setTimeout(function(){ d.remove(); }, 300); } }); }
 function ctCheck(){
@@ -319,7 +350,7 @@ function ctCheck(){
   setTimeout(function(){
     if (S.step !== 'contact') return;
     if (CTWRONG || CT.code !== CTCODE) { CT.res = 'err'; CT.tries++; CTWRONG = false; if (window.__ctWrongSync) window.__ctWrongSync(); ctPaint(); var o = root.querySelector('#ct-otp'); if (o) { o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake'); } return; }
-    CT.res = 'ok'; ctNfHide(); clearInterval(CTT); ctPaint(); var h = root.querySelector('.iv-h'); if (h) h.textContent = ctE() ? 'Email confirmed' : 'Number confirmed'; var sb = root.querySelector('.iv-sub'); if (sb) sb.innerHTML = 'Thanks — ' + (ctE() ? esc(CT.email) : esc(CT.cc + ' ' + CT.phone)) + ' is confirmed.';
+    CT.res = 'ok'; ctNfHide(); clearInterval(CTT); ctPaint(); var h = root.querySelector('.iv-h'); if (h) h.textContent = ctE() ? 'Email confirmed' : 'Number confirmed'; var sb = root.querySelector('.iv-sub'); if (sb) sb.innerHTML = 'Thanks — ' + ctAddr() + ' is confirmed.'; [].forEach.call(root.querySelectorAll('.n5-lh,.n5-rs'), function(x){ x.style.display = 'none'; });
     var ft = root.querySelector('.iv-ft'); if (ft) ft.style.display = 'none';
     tm = setTimeout(function(){ finishIV(); }, 1300);
   }, 850);
@@ -335,7 +366,7 @@ function ctBind(){
     setTimeout(function(){ if (i.isConnected) { try { i.focus({ preventScroll: true }); } catch (e) {} ctPaint(); } }, 80);
     ctPaint();
   }
-  var e = root.querySelector('#ct-e'), p = root.querySelector('#ct-p'), c = root.querySelector('#ct-cc'), sb = root.querySelector('[data-a="ct-send"]'), hint = root.querySelector('#ct-hint'), touched = false;
+  var e = root.querySelector('#ct-e'), p = root.querySelector('#ct-p'), c = root.querySelector('#ct-cc'), sb = root.querySelector('[data-a="ct-next"]') || root.querySelector('[data-a="ct-send"]'), hint = root.querySelector('#ct-hint'), touched = false;
   function valid(){ return e ? /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(e.value.trim()) : p.value.replace(/\D/g, '').length >= 6; }
   function sug(){ if (!e) return ''; var v = e.value.trim().toLowerCase(), at = v.lastIndexOf('@'); if (at < 1) return ''; var fix = CTDOM[v.slice(at + 1)]; return fix ? e.value.trim().slice(0, at + 1) + fix : ''; }
   function hintP(){ if (!hint) return; var s = sug(), bad = touched && !valid() && (e ? e.value.trim() : p.value.trim());
@@ -345,12 +376,15 @@ function ctBind(){
   function ok(){ if (sb) sb.disabled = !valid(); hintP(); }
   if (e) { e.addEventListener('input', function(){ CT.email = e.value.trim(); ok(); }); e.addEventListener('blur', function(){ touched = true; hintP(); }); }
   if (p) { p.addEventListener('input', function(){ CT.phone = p.value.trim(); ok(); }); p.addEventListener('blur', function(){ touched = true; hintP(); }); }
-  if (c) c.addEventListener('change', function(){ CT.ccc = c.value; CT.cc = DIAL[c.value]; });
+  if (c) c.addEventListener('change', function(){ CT.ccc = c.value; CT.cc = DIAL[c.value]; var pr = root.querySelector('.n5-pre'), fl = root.querySelector('.n5-fl'), cn = root.querySelector('.n5-cn'); if (pr) pr.textContent = CT.cc; if (fl) fl.textContent = flag(CT.ccc); if (cn) cn.textContent = ctCName(CT.ccc); });
+  [e, p].forEach(function(x){ if (x) x.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' && sb && !sb.disabled) { ev.preventDefault(); sb.click(); } }); });
   if (hint) hint.addEventListener('click', function(ev){ var b = ev.target.closest('[data-a="ct-fix"]'); if (!b || !e) return; ev.stopPropagation(); e.value = b.getAttribute('data-v'); CT.email = e.value; ok(); });
   ok();
 }
 function ctAct(a, t){
   if (a === 'ct-fix') return;
+  if (a === 'ct-next') { if (t && t.disabled) return; CT.st = 'confirm'; return paint(); }
+  if (a === 'ct-call') { CT.cl = 60; CTCALL = true; clearTimeout(CTNF); ctNfHide(true); CTNF = setTimeout(ctNfShow, 2200); ctPaint(); return; }
   if (a === 'ct-send') { CT.st = CVV === '4' ? 'wait' : 'code'; paint(); ctSendCode(); ctPaint(); return; }
   if (a === 'ct-cancel') { CT.st = 'code'; paint(); ctTick(); ctPaint(); return; }
   if (a === 'ct-code') { CT.st = 'code'; CT.code = ''; CT.res = ''; paint(); ctPaint(); return; }
@@ -610,6 +644,7 @@ function onClick(e){
     if (sp === 'cam') { clearTimeout(tm); return go('intro'); }   /* de la cámara a las instrucciones: sin aviso */
     if (sp === 'intro') { if (S.i > 0) return ask(toDoc); clearTimeout(tm); return go('doc'); }
     if (sp === 'error') { if (S.i > 0) return ask(toDoc); clearTimeout(tm); return go('intro'); }
+    if (sp === 'contact' && CVV === '5' && CT.st !== 'in') return ctAct('ct-edit');
     if (sp === 'contact' && ((CVV === 'a' || CVV === '2') && CT.st === 'code' || (CVV !== 'a' && CVV !== '2') && CT.st === 'in' && CT.sent || CVV === '4' && CT.st === 'code')) { if (CVV === '4' && CT.st === 'code') return ctAct('ct-wait'); if (CVV === '1' || CVV === '3' || CVV === '4') { CT.st = CVV === '4' ? 'wait' : 'code'; return paint(); } ctStop(); CT.st = 'in'; CT.code = ''; CT.res = ''; return paint(); }
     if (sp === 'checking' || sp === 'verifying' || sp === 'done' || sp === 'contact') return ask(toDoc);
     return;
@@ -729,7 +764,7 @@ function mount(){
   d.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); OUT = b.getAttribute('data-v'); try { localStorage.setItem('rep-io', OUT); } catch (x) {} [].forEach.call(d.children, function(c){ c.classList.toggle('on', c === b); }); });
   var add = function(){ if (window.__repPanel) window.__repPanel.add('Resultado de la foto', d, 49); }; if (document.readyState !== 'loading') add(); else document.addEventListener('DOMContentLoaded', add); })();
 /* control: versión del paso de contacto (al pulsar, salta directamente a ese paso) */
-(function(){ var o = [['a', 'Current'], ['1', '1 · Direct'], ['2', '2 · Sheet'], ['3', '3 · Keypad'], ['4', '4 · Link']], d = document.createElement('div'); d.className = 'ff-sw';
+(function(){ var o = [['a', 'Current'], ['1', '1 · Direct'], ['2', '2 · Sheet'], ['3', '3 · Keypad'], ['4', '4 · Link'], ['5', '5 · Native']], d = document.createElement('div'); d.className = 'ff-sw';
   d.innerHTML = o.map(function(x){ return '<button type="button" data-v="' + x[0] + '"' + (x[0] === CVV ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('');
   d.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); CVV = b.getAttribute('data-v'); try { localStorage.setItem('rep-ivcvv', CVV); } catch (x) {} [].forEach.call(d.children, function(c){ c.classList.toggle('on', c === b); }); if (!root || CV === 'off') return; clearTimeout(tm); S.i = parts().length; ctReset(); go('contact'); });
   var add = function(){ if (window.__repPanel && CV !== 'off') window.__repPanel.add('Contact step version (jumps to it)', d, 49.4); }; if (document.readyState !== 'loading') add(); else document.addEventListener('DOMContentLoaded', add); })();
