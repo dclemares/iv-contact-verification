@@ -279,7 +279,7 @@ function ctV6(){
   var E = ctE(), done = CT.st !== 'in';
   var pg = '<div class="n6-pg" aria-label="Step ' + (done ? 2 : 1) + ' of 2"><span class="on"><i></i>' + (E ? 'Add email' : 'Add number') + '</span><span' + (done ? ' class="on"' : '') + '><i></i>Enter code</span></div>';
   if (!done) return { eye: '', ttl: ctAddT(), sub: 'A 6-digit code will be sent ' + (E ? 'to this email' : ctVia()) + '. You’ll enter it on the next screen.',
-    body: pg + '<div class="n6-card"><div class="n6-top"><span class="n6-ic' + (CV === 'whatsapp' ? ' wa' : '') + '">' + ctBig() + '</span><div><b>' + (E ? 'Your email' : CV === 'whatsapp' ? 'Your WhatsApp number' : 'Your mobile number') + '</b><small>Last step of your verification</small></div></div>' + ctNField() + '</div>',
+    body: pg + '<div class="n6-card">' + ctNField() + '</div>',
     act: btn('ct-send', ctSendLbl(), 'pri') };
   return { eye: '', ttl: 'Enter the code', sub: '',
     body: pg + '<div class="n6-card"><div class="n6-to"><span class="n6-ti">' + ctAddrI() + '</span><div><small>Sent ' + ctVia() + ' to</small><b>' + ctAddr() + '</b></div><button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Edit</button></div>'
