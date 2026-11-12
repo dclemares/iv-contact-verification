@@ -551,3 +551,15 @@ aside.fx-nointro>p{display:none!important}
 .n8-lbl{margin-top:20px}.n8-lbl+.n8-pv{margin-top:0}
 .n6-acts{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap}.n6-acts .n6-paste{margin:0}.n6-acts .n6-help{margin:0;padding:8px 14px;background:#f4f5fa;font-size:13px}
 .n6-card>.iv-lbl:first-child{margin-top:2px}
+/* 6 · Focus: sin hueco cuando no hay mensaje; en escritorio el código no se estira (columna centrada, cajas proporcionadas) */
+.n6-card .ct-st:empty{display:none}
+.n6-open svg{width:16px;height:16px}
+@media (min-width:1025px){
+  .n6-card{padding:20px 22px}
+  .n6-code{padding-top:18px}
+  .n6-code>.ct-ch,.n6-code>.ct-otp,.n6-code>.ct-st{max-width:440px;margin-left:auto;margin-right:auto}
+  .n6-acts{flex-wrap:nowrap}
+  .n6-code .ct-d{height:64px;font-size:28px}
+  .n6-code .ct-row{gap:10px}
+  .n6-acts{margin-top:16px}
+}

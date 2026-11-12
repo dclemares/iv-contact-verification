@@ -283,8 +283,8 @@ function ctV6(){
     act: btn('ct-send', ctSendLbl(), 'pri') };
   return { eye: '', ttl: 'Enter the code', sub: '',
     body: pg + '<div class="n6-card"><div class="n6-to"><span class="n6-ti">' + ctAddrI() + '</span><div><small>Sent ' + ctVia() + ' to</small><b>' + ctAddr() + '</b></div><button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Edit</button></div>'
-      + '<div class="n6-code"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div>' + ctOtpB() + '<div class="n6-acts"><button type="button" class="n6-paste" data-a="ct-paste">' + ic('<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/>', 16) + 'Paste code</button><button type="button" class="n7-help n6-help" data-a="ct-help">Didn’t get the code?</button></div></div></div>' + ctHelpSheet(),
-    act: ctActOpen() };
+      + '<div class="n6-code"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div>' + ctOtpB() + '<div class="n6-acts"><button type="button" class="n6-paste" data-a="ct-paste">' + ic('<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/>', 16) + 'Paste code</button><button type="button" class="n7-help n6-help" data-a="ct-help">Didn’t get the code?</button>' + (DESK && (ctE() || ctWA()) ? '<button type="button" class="n6-paste n6-open" data-a="ct-mail">' + (ctE() ? CTI.mailS : CTI.wa) + (ctE() ? 'Open mail app' : 'Open WhatsApp') + '</button>' : '') + '</div></div></div>' + ctHelpSheet(),
+    act: DESK ? '' : ctActOpen() };   /* en escritorio «Open mail app» va junto a los otros botones, no suelto al pie */
 }
 
 /* ---- 7 · Smart: el huésped elige WhatsApp o SMS (o completa el dominio del email); anillo con el tiempo que queda; ayudas en una hoja ---- */
