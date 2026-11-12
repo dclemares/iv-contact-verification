@@ -474,3 +474,4 @@ aside.fx-nointro>p{display:none!important}
   .n6-code .ct-row{gap:10px}
   .n6-acts{margin-top:16px}
 }
+.n6-rs:disabled{color:#a3a6bf;cursor:default;font-variant-numeric:tabular-nums}

@@ -247,12 +247,13 @@ function ctV6(){
     act: btn('ct-send', ctSendLbl(), 'pri') };
   return { eye: '', ttl: 'Enter the code', sub: '',
     body: pg + '<div class="n6-card"><div class="n6-to"><span class="n6-ti">' + ctAddrI() + '</span><div><small>Sent ' + ctVia() + ' to</small><b>' + ctAddr() + '</b></div><button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Edit</button></div>'
-      + '<div class="n6-code"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div>' + ctOtpB() + '<div class="n6-acts"><button type="button" class="n6-paste" data-a="ct-paste">' + ic('<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/>', 16) + 'Paste code</button><button type="button" class="n7-help n6-help" data-a="ct-help">Didn’t get the code?</button></div></div></div>' + ctHelpSheet(),
+      + '<div class="n6-code"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div>' + ctOtpB() + '<div class="n6-acts"><button type="button" class="n6-paste" data-a="ct-paste">' + ic('<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/>', 16) + 'Paste code</button><button type="button" class="n7-help n6-help n6-rs" data-a="ct-resend">Resend code</button></div></div></div>',
     act: '' };   /* sin «Open mail app / Open WhatsApp»: Paste code y Didn’t get the code? bastan */
 }
 
 function ctPaint5(){
-  [].forEach.call(root.querySelectorAll('.n5-r'), function(b){ var t = b.getAttribute('data-t'), v = t === 'left' ? CT.left : t === 'cl' ? CT.cl : 0; b.disabled = v > 0 || CT.res === 'ok'; b.querySelector('.n5-tm').textContent = v > 0 ? ctFmt(v) : ''; });
+  /* «Resend code»: desactivado con la cuenta atrás hasta que se puede reenviar */
+  [].forEach.call(root.querySelectorAll('.n6-rs'), function(b){ var w = CT.left > 0 && CT.res !== 'ok'; b.disabled = w; b.textContent = w ? 'Resend in ' + ctFmt(CT.left) : 'Resend code'; });
 }
 var CTMAX = 3, CTCALL = false;   /* intentos por código: al tercero fallido hay que pedir uno nuevo */
 function ctReset(){ ctStop(); CT.code = ''; CT.res = ''; CT.st = 'in'; CT.sent = false; CT.auto = false; CT.tries = 0; CT.sheet = false; CH = CV === 'whatsapp' ? 'wa' : 'sms'; if (!CT.phone) { var c = S.c && DIAL[S.c] ? S.c : 'ES'; CT.ccc = c; CT.cc = DIAL[c]; } }

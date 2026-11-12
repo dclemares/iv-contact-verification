@@ -15,7 +15,7 @@ Document → photos → **contact step (2 screens)** → Verifying your identity
    - CTA names the channel: «Send code», «Send code by SMS», «Send code on WhatsApp».
 2. **Enter the code**
    - One white card: «Sent by SMS to +34 616 537 158» with Edit, then the 6 boxed digits with the expiry pill. The code is checked automatically on the 6th digit (no verify button).
-   - Under the digits: **Paste code** (fills a code copied from WhatsApp's «Copy code») and **Didn't get the code?**, which opens a bottom sheet with a channel tip and: resend (after 0:30), get it on the other channel — SMS ⇄ WhatsApp, same number — (after 0:30), call me with the code (after 1:00). For email: resend or use a different email.
+   - Under the digits: **Paste code** (fills a code copied from WhatsApp's «Copy code») and **Resend code**, which shows «Resend in 0:30» until a new code can be sent, then resends it and restarts the countdown.
    - 3 tries per code («N tries left»), then «Too many tries» until a new code is sent. Expiry: 10 min (email), 5 min (SMS, WhatsApp).
    - On desktop the code sits in a centred 440 px column.
 
