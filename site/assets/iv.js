@@ -214,16 +214,8 @@ function ctSmall(){ return ctE() ? CTI.mailS : ctWA() ? CTI.wa : CTI.msgS; }
 var DIAL = { ES: '+34', IT: '+39', GB: '+44', FR: '+33', DE: '+49', US: '+1', PT: '+351', NL: '+31', BE: '+32', IE: '+353', CH: '+41', AT: '+43', SE: '+46', DK: '+45', NO: '+47', FI: '+358', PL: '+48', RO: '+40', GR: '+30', MX: '+52', AR: '+54', BR: '+55', CA: '+1', AU: '+61' };
 var DIALO = ['ES', 'IT', 'GB', 'FR', 'DE', 'PT', 'NL', 'BE', 'IE', 'CH', 'AT', 'SE', 'DK', 'NO', 'FI', 'PL', 'RO', 'GR', 'US', 'CA', 'MX', 'AR', 'BR', 'AU'];
 function flag(c){ return String.fromCodePoint(127397 + c.charCodeAt(0), 127397 + c.charCodeAt(1)); }
-/* por qué lo pedimos: la misma explicación en todas las versiones, adaptada al canal */
-function ctCtx(cls){
-  var E = ctE(), W = CV === 'whatsapp';
-  var rows = E ? [[CTI.key, 'Your virtual keys and booking updates arrive here'], [CTI.bell, 'Your host can reach you if plans change']]
-    : W ? [[CTI.wa, 'Your host can message you on WhatsApp about your arrival'], [CTI.bell, 'Urgent updates only, like a late check-in or a change of access']]
-    : [[CTI.bell, 'Your host texts you only for urgent arrival updates'], [CTI.key, 'Like a late check-in or a change of access']];
-  rows.push([CTI.lock, 'Shared only with your host for this stay']);
-  return '<ul class="ct-ctx' + (cls ? ' ' + cls : '') + '">' + rows.map(function(r){ return '<li>' + r[0] + '<span>' + r[1] + '</span></li>'; }).join('') + '</ul>';
-}
-function ctSubIn(){ return 'Your host asks every guest to confirm ' + (ctE() ? 'an email' : CV === 'whatsapp' ? 'a WhatsApp number' : 'a mobile number') + '. We’ll send a 6-digit code ' + ctVia() + '.'; }
+/* qué pasa al enviar, en impersonal: llega un código que se escribe a continuación */
+function ctSubIn(next){ return 'A 6-digit code will be sent ' + (ctE() ? 'to this email' : 'to this number ' + ctVia()) + '. ' + next; }
 
 /* ---- 4 versiones nuevas del paso de contacto (Controles › Paso de contacto) ---- */
 function ctOtpCard(kp){
@@ -241,11 +233,11 @@ function ctActOpen(pri){ return ctE() ? btn('ct-mail', CTI.mailS + 'Open mail ap
 function ctView(){
   if (CVV !== 'a') return ctViewN();
   var E = ctE();
-  if (CT.st === 'in') return { eye: 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'We’ll send a new code ' + ctVia() + '.' : ctSubIn(),
+  if (CT.st === 'in') return { eye: 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'A new code will be sent ' + ctVia() + '.' : ctSubIn('You’ll enter it on the next screen.'),
     body: '<div class="ct-hero" aria-hidden="true"><span class="ct-badge' + (CV === 'whatsapp' ? ' wa' : '') + '">' + ctBig() + '</span><span class="ct-pill"><i></i><i></i><i></i><b></b><i></i><i></i><i></i></span></div>'
-      + '<label class="iv-lbl" for="' + (E ? 'ct-e' : 'ct-p') + '">' + ctLbl() + '</label>' + ctField() + ctCtx(),
+      + '<label class="iv-lbl" for="' + (E ? 'ct-e' : 'ct-p') + '">' + ctLbl() + '</label>' + ctField(),
     act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
-  return { eye: '', ttl: ctChkT(), sub: 'We sent a 6-digit code ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b> <button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Change</button>',
+  return { eye: '', ttl: ctChkT(), sub: 'A 6-digit code was sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b> <button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Change</button>',
     body: ctOtpCard() + ctHelp(), act: ctActOpen() };
 }
 function ctViewN(){
@@ -253,8 +245,8 @@ function ctViewN(){
   /* 1 · Directo: una sola pantalla; tras enviar, el dato pasa a una fila «Sent to … Edit» y la tarjeta del código aparece debajo */
   if (CVV === '1') {
     var edit = CT.st === 'in';
-    if (edit && !CT.sent) return { eye: 'Last step', ttl: ctAddT(), sub: ctSubIn() + ' You’ll type it right here.', body: '<div class="n1-addr ed"><span class="n1-ic">' + ico + '</span><div class="n1-f">' + ctField() + '</div></div>' + ctCtx(), act: btn('ct-send', 'Send code', 'pri') };
-    return { eye: '', ttl: ctChkT(), sub: edit ? 'Fix it and we’ll send a new code.' : 'Enter the 6-digit code we just sent ' + ctVia() + '.',
+    if (edit && !CT.sent) return { eye: 'Last step', ttl: ctAddT(), sub: ctSubIn('You’ll enter it right here.'), body: '<div class="n1-addr ed"><span class="n1-ic">' + ico + '</span><div class="n1-f">' + ctField() + '</div></div>', act: btn('ct-send', 'Send code', 'pri') };
+    return { eye: '', ttl: ctChkT(), sub: edit ? 'Fix it and a new code will be sent.' : 'Enter the 6-digit code just sent ' + ctVia() + '.',
       body: '<div class="n1-addr' + (edit ? ' ed' : '') + '"><span class="n1-ic">' + ico + '</span>' + (edit ? '<div class="n1-f">' + ctField() + '</div>' : '<div class="n1-t"><small>Sent ' + ctVia() + ' to</small><b>' + ctAddr() + '</b></div><button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Edit</button>') + '</div>'
         + (edit ? '<div class="n1-acts">' + btn('ct-send', 'Send new code', 'pri', ' data-n="1"') + '<button type="button" class="n1-cancel" data-a="ct-cancel">Cancel</button></div>' : ctOtpCard() + ctHelp()),
       act: !edit ? ctActOpen() : '' };
@@ -263,14 +255,13 @@ function ctViewN(){
   if (CVV === '2') {
     var sheet = CT.st === 'code' ? '<div class="n2-bg" data-a="ct-edit"></div><div class="n2-sh" role="dialog" aria-modal="true" aria-label="Enter your code"><div class="n2-gr"></div><button type="button" class="n2-x" data-a="ct-edit" aria-label="Close">' + ic('<path d="M18 6 6 18M6 6l12 12"/>', 18) + '</button>'
       + '<h2 class="n2-h">Enter the code</h2><p class="n2-s">Sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b></p>' + ctOtpCard() + ctHelp() + (ctE() || ctWA() ? '<div class="n2-open">' + ctActOpen() + '</div>' : '') + '</div>' : '';
-    return { eye: 'Last step', ttl: ctAddT(), sub: 'One last thing before we verify you.',
-      body: '<div class="n2-card"><div class="n2-top"><span class="n2-ic' + (CV === 'whatsapp' ? ' wa' : '') + '">' + ctBig() + '</span><div><b>' + (E ? 'Your email' : CV === 'whatsapp' ? 'Your WhatsApp number' : 'Your mobile number') + '</b><span>Your host asks every guest for one. We’ll send a 6-digit code ' + ctVia() + '.</span></div></div>' + ctField()
-        + ctCtx('in-card') + '</div>' + sheet,
+    return { eye: 'Last step', ttl: ctAddT(), sub: 'One last step before the identity check.',
+      body: '<div class="n2-card"><div class="n2-top"><span class="n2-ic' + (CV === 'whatsapp' ? ' wa' : '') + '">' + ctBig() + '</span><div><b>' + (E ? 'Your email' : CV === 'whatsapp' ? 'Your WhatsApp number' : 'Your mobile number') + '</b><span>A 6-digit code will be sent ' + ctVia() + '. You’ll enter it next.</span></div></div>' + ctField() + '</div>' + sheet,
       act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
   }
   /* 3 · Teclado: tarjeta oscura con a quién se envió, casillas grandes y teclado numérico propio en móvil */
   if (CVV === '3') {
-    if (CT.st === 'in') return { eye: CT.sent ? '' : 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'We’ll send a new code ' + ctVia() + '.' : ctSubIn(), body: '<label class="iv-lbl">' + ctLbl() + '</label>' + ctField() + (CT.sent ? '' : ctCtx()), act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
+    if (CT.st === 'in') return { eye: CT.sent ? '' : 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'A new code will be sent ' + ctVia() + '.' : ctSubIn('You’ll enter it on the next screen.'), body: '<label class="iv-lbl">' + ctLbl() + '</label>' + ctField(), act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
     var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
     return { eye: '', ttl: ctChkT(), sub: '',
       body: '<div class="n3-hero"><span class="n3-ic">' + (ctE() ? CTI.mail : ctWA() ? CTI.waL : CTI.phone) + '</span><div><small>Code sent ' + ctTo() + '</small><b>' + ctAddr() + '</b></div><button type="button" class="n3-chg" data-a="ct-edit">Change</button></div>'
@@ -279,11 +270,11 @@ function ctViewN(){
   }
   /* 4 · Enlace o código: enviamos un enlace + código; al tocar el enlace seguimos solos; si no, se puede escribir el código */
   if (CT.st === 'linked') return { eye: '', ttl: E ? 'Email confirmed' : 'Number confirmed', sub: 'Thanks — ' + ctAddr() + ' is confirmed.', body: '<div class="iv-mid ok"><span class="iv-okc">' + I.ok + '</span><p class="iv-note go"><i class="iv-spin sm"></i>Finishing your verification…</p></div>', act: '' };
-  if (CT.st === 'in') return { eye: CT.sent ? '' : 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'We’ll send a new link ' + ctVia() + '.' : 'Your host asks every guest to confirm ' + (E ? 'an email' : CV === 'whatsapp' ? 'a WhatsApp number' : 'a mobile number') + '. We’ll send you a link ' + ctVia() + ' — tap it and you’re done. A code comes with it, just in case.', body: '<label class="iv-lbl">' + ctLbl() + '</label>' + ctField() + (CT.sent ? '' : ctCtx()), act: btn('ct-send', CT.sent ? 'Send new link' : 'Send link', 'pri') };
-  if (CT.st === 'code') return { eye: '', ttl: ctChkT(), sub: 'Enter the 6-digit code we sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b>.', body: ctOtpCard() + ctHelp(), act: btn('ct-wait', 'Use the link instead', 'sec') };
+  if (CT.st === 'in') return { eye: CT.sent ? '' : 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'A new link will be sent ' + ctVia() + '.' : 'A link and a 6-digit code will be sent ' + (E ? 'to this email' : 'to this number ' + ctVia()) + '. Tap the link, or enter the code on the next screen.', body: '<label class="iv-lbl">' + ctLbl() + '</label>' + ctField(), act: btn('ct-send', CT.sent ? 'Send new link' : 'Send link', 'pri') };
+  if (CT.st === 'code') return { eye: '', ttl: ctChkT(), sub: 'Enter the 6-digit code sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b>.', body: ctOtpCard() + ctHelp(), act: btn('ct-wait', 'Use the link instead', 'sec') };
   return { eye: '', ttl: E ? 'Confirm from your inbox' : ctWA() ? 'Confirm from WhatsApp' : 'Confirm from your messages', sub: '',
     body: '<div class="n4-w"><div class="n4-rings" aria-hidden="true"><i></i><i></i><i></i><span class="n4-ic' + (ctWA() ? ' wa' : '') + '">' + (ctE() ? CTI.mail : ctWA() ? CTI.waL : CTI.phone) + '</span></div>'
-      + '<p class="n4-t">We sent a link ' + ctTo() + ' <b>' + ctAddr() + '</b>.<br>Tap it and we’ll continue here automatically.</p>'
+      + '<p class="n4-t">A link was sent ' + ctTo() + ' <b>' + ctAddr() + '</b>.<br>Tap it and this page continues on its own.</p>'
       + '<span class="n4-chip"><i class="iv-spin sm"></i>Waiting for you to tap the link…</span>'
       + (!E ? '<button type="button" class="n4-alt" data-a="ct-sw">' + (ctWA() ? 'No WhatsApp? <b>Send it by SMS</b>' : 'Prefer WhatsApp? <b>Send it there</b>') + '</button>' : '')
       + '<button type="button" class="n4-alt" data-a="ct-edit">Wrong ' + (E ? 'email' : 'number') + '? <b>Change it</b></button></div>',

@@ -20,7 +20,7 @@ Document → photos → **Add your email / mobile / WhatsApp number → code** �
 Demo codes: email `482791`, SMS and WhatsApp `913604`. A simulated notification (Mail, Messages or WhatsApp) drops in after sending; tapping it fills the code (in version 4 it acts as the link).
 
 ## Common to every version
-- **Context first**: «Last step» eyebrow, why the host asks («Your host asks every guest to confirm…») and a short list of what it is used for, adapted to the channel, plus «Shared only with your host for this stay».
+- **What happens next**: «Last step» eyebrow and a neutral subtitle (no «we») saying a 6-digit code will be sent to the email or number and that the guest enters it next.
 - **Phone field**: the country code defaults to the country of the scanned document; 24 common codes with flags.
 - **Field checks**: suggests the right domain for common email typos (gmial.com → gmail.com, tap to fix); explains an incomplete email or a too-short number after leaving the field.
 - **SMS ⇄ WhatsApp**: with a phone channel, once resend is available (and on expired or locked codes) the guest can get the code on the other channel for the same number. Version 4 offers it while waiting for the link.
