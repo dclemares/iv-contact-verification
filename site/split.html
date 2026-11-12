@@ -129,7 +129,7 @@ window.addEventListener('message', function(ev){
 /* los ajustes los cambia el panel (que vive en esta página pero lo gobierna el móvil) y se guardan en localStorage: el escritorio los lee al cargar, así que se recarga cuando se toca un control del panel (no por cualquier cambio de almacenamiento: el flujo de verificación también escribe claves y no debe reiniciar el escritorio) */
 var tmr = 0, reloads = [];
 document.addEventListener('click', function(e){
-  if (!e.target.closest || !e.target.closest('#rep-panel') || e.target.closest('.rp-tab') || e.target.closest('.rp-s[data-t="Vela sombreado"]') || e.target.closest('.rp-s[data-t="Bordes"]') || e.target.closest('.rp-s[data-t="Modal huéspedes"]') || e.target.closest('.rp-s[data-t="Tarjeta de prueba"]') || e.target.closest('.rp-s[data-t="Ver paso (sin pagar)"]')) return;   /* «Modal huéspedes», «Tarjeta de prueba» y «Ver paso» no cambian ajustes (solo abren o rellenan el modal, y se replican en el otro marco): recargar el escritorio lo cerraría */   /* las pestañas del panel no cambian ajustes */
+  if (!e.target.closest || !e.target.closest('#rep-panel') || e.target.closest('.rp-tab') || e.target.closest('.rp-s[data-t^="Contact step version"]') || e.target.closest('.rp-s[data-t="Contact code (next try)"]') || e.target.closest('.rp-s[data-t="Vela sombreado"]') || e.target.closest('.rp-s[data-t="Bordes"]') || e.target.closest('.rp-s[data-t="Modal huéspedes"]') || e.target.closest('.rp-s[data-t="Tarjeta de prueba"]') || e.target.closest('.rp-s[data-t="Ver paso (sin pagar)"]')) return;   /* «Modal huéspedes», «Tarjeta de prueba» y «Ver paso» no cambian ajustes (solo abren o rellenan el modal, y se replican en el otro marco): recargar el escritorio lo cerraría */   /* las pestañas del panel no cambian ajustes */
   var now = Date.now(); reloads = reloads.filter(function(t){ return now - t < 8000; }); if (reloads.length >= 4) return;
   clearTimeout(tmr); tmr = setTimeout(function(){ reloads.push(Date.now()); try { go(frD, frD.contentWindow.location.href); } catch (x) { go(frD, url('d')); } }, 450);
 }, true);
@@ -138,4 +138,4 @@ fr.addEventListener('load', function(){ try { var m = /screens\/([^/]+)\.m\.html
 window.addEventListener('resize', layout);
 if (FX) { document.getElementById('ptg').addEventListener('click', function(){ setPO(!PO); }); document.documentElement.classList.toggle('po', PO); var _b = document.getElementById('ptg'); _b.setAttribute('aria-expanded', String(PO)); _b.querySelector('span').textContent = PO ? 'Hide controls' : 'Controls'; }
 layout(); loadBoth();
-</script><script src="assets/i18n-en.js?v=1794325142"></script></body></html>
+</script><script src="assets/i18n-en.js?v=17945111120"></script></body></html>

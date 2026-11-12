@@ -20,6 +20,8 @@ var TRIES = 0;
 var CV = 'email'; try { CV = localStorage.getItem('rep-ivcv') || 'email'; } catch (e) {} if (['off', 'email', 'sms', 'whatsapp'].indexOf(CV) < 0) CV = 'email';
 var CH = CV === 'whatsapp' ? 'wa' : 'sms';   /* canal real del código cuando es un móvil: el huésped puede cambiar SMS ⇄ WhatsApp */
 var CVV = '6'; try { CVV = localStorage.getItem('rep-ivcvv') || '6'; } catch (e) {} if (['a', '1', '2', '3', '4', '5', '6', '7', '8'].indexOf(CVV) < 0) CVV = '6';   /* 6 · Focus es la versión definida */
+/* una sola vez por navegador: quien tenía guardada otra versión de antes pasa a la 6 (luego puede volver a cambiarla en Controles) */
+try { if (!localStorage.getItem('rep-ivcvv-final6')) { localStorage.setItem('rep-ivcvv-final6', '1'); localStorage.setItem('rep-ivcvv', '6'); CVV = '6'; } } catch (e) {}
 var CT = { st: 'in', code: '', res: '', left: 0, exp: 0, email: '', cc: '+34', ccc: 'ES', phone: '', sent: false, tries: 0 }, CTCODE = CV === 'email' ? '482791' : '913604', CTWRONG = false, CTT = 0, CTNF = 0;
 /* duración simulada de la verificación en segundos (0 = no termina nunca: se queda al 99 %) */
 var VT = 5; try { var vtv = localStorage.getItem('rep-iv-t'); if (vtv !== null) VT = Number(vtv); } catch (e) {}
@@ -829,8 +831,15 @@ function mount(){
 /* control: versión del paso de contacto (al pulsar, salta directamente a ese paso) */
 (function(){ var o = [['a', 'Current'], ['1', '1 · Direct'], ['2', '2 · Sheet'], ['3', '3 · Keypad'], ['4', '4 · Link'], ['5', '5 · Native'], ['6', '6 · Focus (final)'], ['7', '7 · Smart'], ['8', '8 · Preview']], d = document.createElement('div'); d.className = 'ff-sw';
   d.innerHTML = o.map(function(x){ return '<button type="button" data-v="' + x[0] + '"' + (x[0] === CVV ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('');
-  d.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); CVV = b.getAttribute('data-v'); try { localStorage.setItem('rep-ivcvv', CVV); } catch (x) {} [].forEach.call(d.children, function(c){ c.classList.toggle('on', c === b); }); if (!root || CV === 'off') return; clearTimeout(tm); S.i = parts().length; ctReset(); go('contact'); });
+  d.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); CVV = b.getAttribute('data-v'); try { localStorage.setItem('rep-ivcvv', CVV); localStorage.setItem('rep-ct-jump', String(Date.now())); } catch (x) {} [].forEach.call(d.children, function(c){ c.classList.toggle('on', c === b); }); if (!root || CV === 'off') return; clearTimeout(tm); S.i = parts().length; ctReset(); go('contact'); });
   var add = function(){ if (window.__repPanel && CV !== 'off') window.__repPanel.add('Contact step version (jumps to it)', d, 49.4); }; if (document.readyState !== 'loading') add(); else document.addEventListener('DOMContentLoaded', add); })();
+/* Móvil + escritorio: el control de versión vive en una sola pantalla; la otra se entera por el evento storage y salta también al paso */
+window.addEventListener('storage', function(e){
+  if (e.key !== 'rep-ct-jump') return;   /* lo escribe el control de versión al pulsarlo (aunque sea la misma versión) */
+  try { CVV = localStorage.getItem('rep-ivcvv') || CVV; } catch (x) {}
+  [].forEach.call(document.querySelectorAll('.ff-sw button[data-v]'), function(c){ if (c.parentElement && c.parentElement.textContent.indexOf('Native') >= 0) c.classList.toggle('on', c.getAttribute('data-v') === CVV); });
+  if (!root || CV === 'off') return; clearTimeout(tm); S.i = parts().length; ctReset(); go('contact');
+});
 /* control: verificación de contacto — el próximo código es incorrecto */
 (function(){ var o = [['0', 'Correct'], ['1', 'Wrong']], d = document.createElement('div'); d.className = 'ff-sw';
   function sync(){ [].forEach.call(d.children, function(c){ c.classList.toggle('on', (c.getAttribute('data-v') === '1') === CTWRONG); }); }
