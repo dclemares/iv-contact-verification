@@ -19,9 +19,7 @@ var TRIES = 0;
 /* verificación de contacto al final de la IV (Controles › Verificar contacto): 'off' · 'email' · 'sms' · 'whatsapp' — el anfitrión elige un canal */
 var CV = 'email'; try { CV = localStorage.getItem('rep-ivcv') || 'email'; } catch (e) {} if (['off', 'email', 'sms', 'whatsapp'].indexOf(CV) < 0) CV = 'email';
 var CH = CV === 'whatsapp' ? 'wa' : 'sms';   /* canal real del código cuando es un móvil: el huésped puede cambiar SMS ⇄ WhatsApp */
-var CVV = '6'; try { CVV = localStorage.getItem('rep-ivcvv') || '6'; } catch (e) {} if (['a', '1', '2', '3', '4', '5', '6', '7', '8'].indexOf(CVV) < 0) CVV = '6';   /* 6 · Focus es la versión definida */
-/* una sola vez por navegador: quien tenía guardada otra versión de antes pasa a la 6 (luego puede volver a cambiarla en Controles) */
-try { if (!localStorage.getItem('rep-ivcvv-final6')) { localStorage.setItem('rep-ivcvv-final6', '1'); localStorage.setItem('rep-ivcvv', '6'); CVV = '6'; } } catch (e) {}
+var CVV = '6';   /* versión única del paso de contacto: 6 · Focus (las demás se eliminaron) */
 var CT = { st: 'in', code: '', res: '', left: 0, exp: 0, email: '', cc: '+34', ccc: 'ES', phone: '', sent: false, tries: 0 }, CTCODE = CV === 'email' ? '482791' : '913604', CTWRONG = false, CTT = 0, CTNF = 0;
 /* duración simulada de la verificación en segundos (0 = no termina nunca: se queda al 99 %) */
 var VT = 5; try { var vtv = localStorage.getItem('rep-iv-t'); if (vtv !== null) VT = Number(vtv); } catch (e) {}
@@ -219,47 +217,10 @@ function flag(c){ return String.fromCodePoint(127397 + c.charCodeAt(0), 127397 +
 /* qué pasa al enviar, en impersonal: llega un código que se escribe a continuación */
 function ctSubIn(next){ return 'A 6-digit code will be sent ' + (ctE() ? 'to this email' : 'to this number ' + ctVia()) + '. ' + next; }
 
-/* ---- 4 versiones nuevas del paso de contacto (Controles › Paso de contacto) ---- */
-function ctOtpCard(kp){
-  var bx = ''; for (var k = 0; k < 6; k++) { if (k === 3) bx += '<span class="ct-dash" aria-hidden="true"></span>'; bx += '<span class="ct-d" data-k="' + k + '"></span>'; }
-  return '<div class="ct-card"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div>'
-    + '<div class="ct-otp" id="ct-otp"><input id="ct-i" type="text" inputmode="' + (kp ? 'none' : 'numeric') + '" autocomplete="one-time-code" maxlength="6" aria-label="6-digit code" value="' + CT.code + '"' + (kp ? ' readonly' : '') + '><div class="ct-row">' + bx + '</div></div>'
-    + '<div class="ct-st" id="ct-st" role="status" aria-live="polite"></div></div>';
-}
-function ctAddr(){ return ctE() ? esc(CT.email) : esc(CT.cc + ' ' + CT.phone.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')); }
-function ctField(){ var E = ctE(); return (E ? '<div class="ct-in"><input id="ct-e" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com" value="' + esc(CT.email) + '" aria-label="Email" aria-describedby="ct-hint"></div>'
-  : '<div class="ct-in tel"><select id="ct-cc" aria-label="Country code">' + DIALO.map(function(c){ return '<option value="' + c + '"' + (c === CT.ccc ? ' selected' : '') + '>' + flag(c) + ' ' + DIAL[c] + '</option>'; }).join('') + '</select><i></i><input id="ct-p" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="612 345 678" value="' + esc(CT.phone) + '" aria-label="' + ctLbl() + '" aria-describedby="ct-hint"></div>')
-  + '<p class="ct-hint" id="ct-hint" aria-live="polite"></p>'; }
-function ctHelp(){ return '<p class="ct-help">' + CTI.info + '<span>' + (ctE() ? 'Can’t find it? Check your spam or promotions folder.' : ctWA() ? 'Look for a chat from Chekin in WhatsApp. You need WhatsApp on this number.' : 'Your phone may suggest the code above the keyboard.') + '</span></p>'; }
-function ctActOpen(pri){ return ctE() ? btn('ct-mail', CTI.mailS + 'Open mail app', pri ? 'pri' : 'sec') : ctWA() ? btn('ct-mail', CTI.wa + 'Open WhatsApp', pri ? 'pri' : 'sec') : ''; }
-function ctView(){
-  if (CVV !== 'a') return ctViewN();
-  var E = ctE();
-  if (CT.st === 'in') return { eye: 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'A new code will be sent ' + ctVia() + '.' : ctSubIn('You’ll enter it on the next screen.'),
-    body: '<div class="ct-hero" aria-hidden="true"><span class="ct-badge' + (CV === 'whatsapp' ? ' wa' : '') + '">' + ctBig() + '</span><span class="ct-pill"><i></i><i></i><i></i><b></b><i></i><i></i><i></i></span></div>'
-      + '<label class="iv-lbl" for="' + (E ? 'ct-e' : 'ct-p') + '">' + ctLbl() + '</label>' + ctField(),
-    act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
-  return { eye: '', ttl: ctChkT(), sub: 'A 6-digit code was sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b> <button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Change</button>',
-    body: ctOtpCard() + ctHelp(), act: ctActOpen() };
-}
-/* ---- 5 · Native: como los verificadores de WhatsApp, iOS/Android, Twilio Verify o Uber ----
-   1) país en su propia fila + número grande, «Send code» · 2) código en una caja blanca que se comprueba solo y «Didn’t get the code?» con reenviar / otro canal / llamada, cada uno con su cuenta atrás */
+function ctView(){ return ctV6(); }
 function ctCName(c){ return (CATBY[c] && CATBY[c][1]) || { CA: 'Canada', AU: 'Australia', US: 'United States', GB: 'United Kingdom' }[c] || c; }
-function ctV5(){
-  var E = ctE(), W = ctWA(), chev = ic('<path d="m9 6 6 6-6 6"/>', 16);
-  if (CT.st === 'in') {
-    var f = ctNField();
-    return { eye: 'Last step', ttl: ctAddT(), sub: 'A 6-digit code will be sent ' + (E ? 'to this email' : ctVia()) + ' to confirm it.', body: f, act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
-  }
-  var bx = ''; for (var k = 0; k < 6; k++) { if (k === 3) bx += '<span class="n5-gap" aria-hidden="true"></span>'; bx += '<span class="ct-d" data-k="' + k + '"></span>'; }
-  var rows = ctRowsD();
-  return { eye: '', ttl: E ? 'Verify your email' : 'Verify your number', sub: 'Enter the 6-digit code sent ' + ctTo() + ' <b class="ct-to">' + ctAddr() + '</b>. <button type="button" class="n5-wr" data-a="ct-edit">Wrong ' + (E ? 'email' : 'number') + '?</button>',
-    body: '<div class="ct-card n5-card"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div><div class="ct-otp n5-otp" id="ct-otp"><input id="ct-i" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="6-digit code" value="' + CT.code + '"><div class="ct-row">' + bx + '</div></div>'
-      + '<div class="ct-st" id="ct-st" role="status" aria-live="polite"></div></div>'
-      + '<p class="n5-lh">Didn’t get the code?</p><div class="n5-rs">' + rows.map(function(r){ return '<button type="button" class="n5-r" data-a="' + r[0] + '" data-t="' + r[3] + '">' + r[1] + '<span>' + r[2] + '</span><em class="n5-tm"></em></button>'; }).join('') + '</div>',
-    act: '' };
-}
-/* base Native compartida por 5–8: campo (país + número grande, o email), filas de ayuda, versión activa */
+function ctAddr(){ return ctE() ? esc(CT.email) : esc(CT.cc + ' ' + CT.phone.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ')); }
+/* piezas del paso de contacto (6 · Focus): campo (país + número grande, o email), filas de ayuda */
 function ctN5(){ return ['5', '6', '7', '8'].indexOf(CVV) >= 0; }
 function ctNField(){ var E = ctE(), chev = ic('<path d="m9 6 6 6-6 6"/>', 16); return E ? '<label class="iv-lbl" for="ct-e">Email</label><div class="n5-num em"><input id="ct-e" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com" value="' + esc(CT.email) + '" aria-describedby="ct-hint"></div><p class="ct-hint" id="ct-hint" aria-live="polite"></p>'
       : '<label class="iv-lbl" for="ct-cc">Country</label><label class="n5-cty"><span class="n5-fl" aria-hidden="true">' + flag(CT.ccc) + '</span><span class="n5-cn">' + esc(ctCName(CT.ccc)) + '</span>' + chev + '<select id="ct-cc" aria-label="Country">' + DIALO.slice().sort(function(a, b){ return ctCName(a) < ctCName(b) ? -1 : 1; }).map(function(c){ return '<option value="' + c + '"' + (c === CT.ccc ? ' selected' : '') + '>' + esc(ctCName(c)) + ' (' + DIAL[c] + ')</option>'; }).join('') + '</select></label>'
@@ -290,81 +251,8 @@ function ctV6(){
     act: '' };   /* sin «Open mail app / Open WhatsApp»: Paste code y Didn’t get the code? bastan */
 }
 
-/* ---- 7 · Smart: el huésped elige WhatsApp o SMS (o completa el dominio del email); anillo con el tiempo que queda; ayudas en una hoja ---- */
-function ctV7(){
-  var E = ctE();
-  if (CT.st === 'in') {
-    var extra = E ? '<div class="n7-doms" role="group" aria-label="Email domain">' + CTDOMS.map(function(d){ return '<button type="button" data-a="ct-dom" data-v="' + d + '">@' + d + '</button>'; }).join('') + '</div>'
-      : '<p class="iv-lbl">Get the code by</p><div class="n7-chs" role="radiogroup">' + [['wa', CTI.waL, 'WhatsApp', 'Usually the fastest'], ['sms', CTI.phone, 'SMS', 'Works on any phone']].map(function(c){ var on = CH === c[0]; return '<button type="button" role="radio" aria-checked="' + on + '" class="n7-ch' + (on ? ' on' : '') + (c[0] === 'wa' ? ' wa' : '') + '" data-a="ct-ch" data-v="' + c[0] + '"><span class="n7-chi">' + c[1] + '</span><b>' + c[2] + '</b><small>' + c[3] + '</small><i class="n7-ck">' + I.okS + '</i></button>'; }).join('') + '</div>';
-    return { eye: 'Last step', ttl: E ? 'Add your email' : 'Add your mobile number', sub: E ? 'A 6-digit code will be sent to this email.' : 'Choose where the 6-digit code arrives.', body: ctNField() + extra, act: btn('ct-send', ctSendLbl(), 'pri') };
-  }
-  var sheet = ctHelpSheet();
-  return { eye: '', ttl: E ? 'Check your email' : ctWA() ? 'Check WhatsApp' : 'Check your messages', sub: '',
-    body: '<div class="n7-card"><div class="n7-ring"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28"/><circle id="n7-arc" cx="32" cy="32" r="28" pathLength="100"/></svg><span class="n7-ri' + (ctWA() ? ' wa' : '') + '">' + (E ? CTI.mail : ctWA() ? CTI.waL : CTI.phone) + '</span></div>'
-      + '<p class="n7-to">Code sent ' + ctTo() + '<br><b>' + ctAddr() + '</b> <button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Change</button></p><span class="ct-exp" id="ct-exp"></span>' + ctOtpB() + '</div>'
-      + '<button type="button" class="n7-help" data-a="ct-help">Didn’t get the code?</button>' + sheet,
-    act: ctActOpen() };
-}
-
-/* ---- 8 · Preview: se enseña cómo es el mensaje que llega (remitente y forma), para reconocerlo; luego, «Delivered» y el código ---- */
-function ctBubble(sent){
-  var E = ctE(), W = ctWA(), code = sent ? '<b>••• •••</b>' : '<b>••• •••</b>';
-  var st = sent ? '<span class="n8-st"><i class="n8-dot"></i>' + (E ? 'Sent just now' : W ? 'Delivered' : 'Sent just now') + (W ? ' <em>✓✓</em>' : '') + '</span>' : '';
-  if (E) return '<div class="n8-pv mail"><div class="n8-mh"><span class="n8-av">C</span><div><b>Chekin</b><small>Your verification code</small></div><time>now</time></div><p>Use ' + code + ' to confirm your email. It expires in 10 minutes.</p>' + st + '</div>';
-  if (W) return '<div class="n8-pv wa"><div class="n8-wh"><span class="n8-av">C</span><b>Chekin</b><i class="n8-vf">' + I.okS + '</i></div><div class="n8-bb">' + code + ' is your verification code. For your security, do not share this code.<button type="button" tabindex="-1">Copy code</button></div>' + st + '</div>';
-  return '<div class="n8-pv sms"><div class="n8-sh"><span class="n8-av">C</span><b>Chekin</b></div><div class="n8-bb">Your verification code is ' + code + '. It expires in 5 minutes.</div>' + st + '</div>';
-}
-function ctV8(){
-  var E = ctE();
-  if (CT.st === 'in') return { eye: 'Last step', ttl: ctAddT(), sub: 'A 6-digit code will be sent ' + (E ? 'to this email' : ctVia()) + '. You’ll enter it on the next screen.',
-    body: ctNField() + '<p class="iv-lbl n8-lbl">What you’ll receive</p>' + ctBubble(false), act: btn('ct-send', ctSendLbl(), 'pri') };
-  return { eye: '', ttl: E ? 'Check your email' : ctWA() ? 'Check WhatsApp' : 'Check your messages', sub: 'Look for this message from Chekin, sent to <b class="ct-to">' + ctAddr() + '</b>. <button type="button" class="n5-wr" data-a="ct-edit">Wrong ' + (E ? 'email' : 'number') + '?</button>',
-    body: ctBubble(true) + '<div class="ct-card n8-card"><div class="ct-ch"><span>Type the code here</span><span class="ct-exp" id="ct-exp"></span></div>' + ctOtpB() + '</div><p class="n5-lh">Didn’t get it?</p>' + ctRowsH(),
-    act: ctActOpen() };
-}
 function ctPaint5(){
   [].forEach.call(root.querySelectorAll('.n5-r'), function(b){ var t = b.getAttribute('data-t'), v = t === 'left' ? CT.left : t === 'cl' ? CT.cl : 0; b.disabled = v > 0 || CT.res === 'ok'; b.querySelector('.n5-tm').textContent = v > 0 ? ctFmt(v) : ''; });
-}
-function ctViewN(){
-  if (CVV === '5') return ctV5(); if (CVV === '6') return ctV6(); if (CVV === '7') return ctV7(); if (CVV === '8') return ctV8();
-  var E = ctE(), ico = ctSmall();
-  /* 1 · Directo: una sola pantalla; tras enviar, el dato pasa a una fila «Sent to … Edit» y la tarjeta del código aparece debajo */
-  if (CVV === '1') {
-    var edit = CT.st === 'in';
-    if (edit && !CT.sent) return { eye: 'Last step', ttl: ctAddT(), sub: ctSubIn('You’ll enter it right here.'), body: '<div class="n1-addr ed"><span class="n1-ic">' + ico + '</span><div class="n1-f">' + ctField() + '</div></div>', act: btn('ct-send', 'Send code', 'pri') };
-    return { eye: '', ttl: ctChkT(), sub: edit ? 'Fix it and a new code will be sent.' : 'Enter the 6-digit code just sent ' + ctVia() + '.',
-      body: '<div class="n1-addr' + (edit ? ' ed' : '') + '"><span class="n1-ic">' + ico + '</span>' + (edit ? '<div class="n1-f">' + ctField() + '</div>' : '<div class="n1-t"><small>Sent ' + ctVia() + ' to</small><b>' + ctAddr() + '</b></div><button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Edit</button>') + '</div>'
-        + (edit ? '<div class="n1-acts">' + btn('ct-send', 'Send new code', 'pri', ' data-n="1"') + '<button type="button" class="n1-cancel" data-a="ct-cancel">Cancel</button></div>' : ctOtpCard() + ctHelp()),
-      act: !edit ? ctActOpen() : '' };
-  }
-  /* 2 · Hoja de código: el dato y el porqué en una tarjeta; el código se escribe en una hoja que sube desde abajo (diálogo centrado en escritorio) */
-  if (CVV === '2') {
-    var sheet = CT.st === 'code' ? '<div class="n2-bg" data-a="ct-edit"></div><div class="n2-sh" role="dialog" aria-modal="true" aria-label="Enter your code"><div class="n2-gr"></div><button type="button" class="n2-x" data-a="ct-edit" aria-label="Close">' + ic('<path d="M18 6 6 18M6 6l12 12"/>', 18) + '</button>'
-      + '<h2 class="n2-h">Enter the code</h2><p class="n2-s">Sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b></p>' + ctOtpCard() + ctHelp() + (ctE() || ctWA() ? '<div class="n2-open">' + ctActOpen() + '</div>' : '') + '</div>' : '';
-    return { eye: 'Last step', ttl: ctAddT(), sub: 'One last step before the identity check.',
-      body: '<div class="n2-card"><div class="n2-top"><span class="n2-ic' + (CV === 'whatsapp' ? ' wa' : '') + '">' + ctBig() + '</span><div><b>' + (E ? 'Your email' : CV === 'whatsapp' ? 'Your WhatsApp number' : 'Your mobile number') + '</b><span>A 6-digit code will be sent ' + ctVia() + '. You’ll enter it next.</span></div></div>' + ctField() + '</div>' + sheet,
-      act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
-  }
-  /* 3 · Teclado: tarjeta oscura con a quién se envió, casillas grandes y teclado numérico propio en móvil */
-  if (CVV === '3') {
-    if (CT.st === 'in') return { eye: CT.sent ? '' : 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'A new code will be sent ' + ctVia() + '.' : ctSubIn('You’ll enter it on the next screen.'), body: '<label class="iv-lbl">' + ctLbl() + '</label>' + ctField(), act: btn('ct-send', CT.sent ? 'Send new code' : 'Send code', 'pri') };
-    var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
-    return { eye: '', ttl: ctChkT(), sub: '',
-      body: '<div class="n3-hero"><span class="n3-ic">' + (ctE() ? CTI.mail : ctWA() ? CTI.waL : CTI.phone) + '</span><div><small>Code sent ' + ctTo() + '</small><b>' + ctAddr() + '</b></div><button type="button" class="n3-chg" data-a="ct-edit">Change</button></div>'
-        + ctOtpCard(!DESK) + (DESK ? ctHelp() : '<div class="n3-kp" role="group" aria-label="Keypad">' + keys.map(function(k){ return k === '' ? '<span></span>' : '<button type="button" data-a="ct-k" data-k="' + k + '"' + (k === 'del' ? ' aria-label="Delete"' : '') + '>' + (k === 'del' ? ic('<path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/><path d="m16 9-5 6M11 9l5 6"/>', 22) : k) + '</button>'; }).join('') + '</div>'),
-      act: '' };
-  }
-  /* 4 · Enlace o código: enviamos un enlace + código; al tocar el enlace seguimos solos; si no, se puede escribir el código */
-  if (CT.st === 'linked') return { eye: '', ttl: E ? 'Email confirmed' : 'Number confirmed', sub: 'Thanks — ' + ctAddr() + ' is confirmed.', body: '<div class="iv-mid ok"><span class="iv-okc">' + I.ok + '</span><p class="iv-note go"><i class="iv-spin sm"></i>Finishing your verification…</p></div>', act: '' };
-  if (CT.st === 'in') return { eye: CT.sent ? '' : 'Last step', ttl: CT.sent ? ctChgT() : ctAddT(), sub: CT.sent ? 'A new link will be sent ' + ctVia() + '.' : 'A link and a 6-digit code will be sent ' + (E ? 'to this email' : 'to this number ' + ctVia()) + '. Tap the link, or enter the code on the next screen.', body: '<label class="iv-lbl">' + ctLbl() + '</label>' + ctField(), act: btn('ct-send', CT.sent ? 'Send new link' : 'Send link', 'pri') };
-  if (CT.st === 'code') return { eye: '', ttl: ctChkT(), sub: 'Enter the 6-digit code sent ' + ctTo() + ' <b class="ct-to">' + ctMask() + '</b>.', body: ctOtpCard() + ctHelp(), act: btn('ct-wait', 'Use the link instead', 'sec') };
-  return { eye: '', ttl: E ? 'Confirm from your inbox' : ctWA() ? 'Confirm from WhatsApp' : 'Confirm from your messages', sub: '',
-    body: '<div class="n4-w"><div class="n4-rings" aria-hidden="true"><i></i><i></i><i></i><span class="n4-ic' + (ctWA() ? ' wa' : '') + '">' + (ctE() ? CTI.mail : ctWA() ? CTI.waL : CTI.phone) + '</span></div>'
-      + '<p class="n4-t">A link was sent ' + ctTo() + ' <b>' + ctAddr() + '</b>.<br>Tap it and this page continues on its own.</p>'
-      + '<span class="n4-chip"><i class="iv-spin sm"></i>Waiting for you to tap the link…</span>'
-      + (!E ? '<button type="button" class="n4-alt" data-a="ct-sw">' + (ctWA() ? 'No WhatsApp? <b>Send it by SMS</b>' : 'Prefer WhatsApp? <b>Send it there</b>') + '</button>' : '')
-      + '<button type="button" class="n4-alt" data-a="ct-edit">Wrong ' + (E ? 'email' : 'number') + '? <b>Change it</b></button></div>',
-    act: ctActOpen(true) + btn('ct-code', 'Enter the code instead', E || ctWA() ? 'sec' : 'pri') };
 }
 var CTMAX = 3, CTCALL = false;   /* intentos por código: al tercero fallido hay que pedir uno nuevo */
 function ctReset(){ ctStop(); CT.code = ''; CT.res = ''; CT.st = 'in'; CT.sent = false; CT.auto = false; CT.tries = 0; CT.sheet = false; CH = CV === 'whatsapp' ? 'wa' : 'sms'; if (!CT.phone) { var c = S.c && DIAL[S.c] ? S.c : 'ES'; CT.ccc = c; CT.cc = DIAL[c]; } }
@@ -828,18 +716,12 @@ function mount(){
   d.innerHTML = o.map(function(x){ return '<button type="button" data-v="' + x[0] + '"' + (x[0] === OUT ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('');
   d.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); OUT = b.getAttribute('data-v'); try { localStorage.setItem('rep-io', OUT); } catch (x) {} [].forEach.call(d.children, function(c){ c.classList.toggle('on', c === b); }); });
   var add = function(){ if (window.__repPanel) window.__repPanel.add('Resultado de la foto', d, 49); }; if (document.readyState !== 'loading') add(); else document.addEventListener('DOMContentLoaded', add); })();
-/* control: versión del paso de contacto (al pulsar, salta directamente a ese paso) */
-(function(){ var o = [['a', 'Current'], ['1', '1 · Direct'], ['2', '2 · Sheet'], ['3', '3 · Keypad'], ['4', '4 · Link'], ['5', '5 · Native'], ['6', '6 · Focus (final)'], ['7', '7 · Smart'], ['8', '8 · Preview']], d = document.createElement('div'); d.className = 'ff-sw';
-  d.innerHTML = o.map(function(x){ return '<button type="button" data-v="' + x[0] + '"' + (x[0] === CVV ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('');
-  d.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); CVV = b.getAttribute('data-v'); try { localStorage.setItem('rep-ivcvv', CVV); localStorage.setItem('rep-ct-jump', String(Date.now())); } catch (x) {} [].forEach.call(d.children, function(c){ c.classList.toggle('on', c === b); }); if (!root || CV === 'off') return; clearTimeout(tm); S.i = parts().length; ctReset(); go('contact'); });
-  var add = function(){ if (window.__repPanel && CV !== 'off') window.__repPanel.add('Contact step version (jumps to it)', d, 49.4); }; if (document.readyState !== 'loading') add(); else document.addEventListener('DOMContentLoaded', add); })();
-/* Móvil + escritorio: el control de versión vive en una sola pantalla; la otra se entera por el evento storage y salta también al paso */
-window.addEventListener('storage', function(e){
-  if (e.key !== 'rep-ct-jump') return;   /* lo escribe el control de versión al pulsarlo (aunque sea la misma versión) */
-  try { CVV = localStorage.getItem('rep-ivcvv') || CVV; } catch (x) {}
-  [].forEach.call(document.querySelectorAll('.ff-sw button[data-v]'), function(c){ if (c.parentElement && c.parentElement.textContent.indexOf('Native') >= 0) c.classList.toggle('on', c.getAttribute('data-v') === CVV); });
-  if (!root || CV === 'off') return; clearTimeout(tm); S.i = parts().length; ctReset(); go('contact');
-});
+/* control: ir directamente al paso de contacto (en Móvil + escritorio salta en los dos marcos: el otro se entera por storage) */
+function ctJump(){ if (!root || CV === 'off') return; clearTimeout(tm); S.i = parts().length; ctReset(); go('contact'); }
+(function(){ var d = document.createElement('div'); d.className = 'ff-sw'; d.innerHTML = '<button type="button">Go to contact step</button>';
+  d.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); try { localStorage.setItem('rep-ct-jump', String(Date.now())); } catch (x) {} ctJump(); });
+  var add = function(){ if (window.__repPanel && CV !== 'off') window.__repPanel.add('Contact step', d, 49.4); }; if (document.readyState !== 'loading') add(); else document.addEventListener('DOMContentLoaded', add); })();
+window.addEventListener('storage', function(e){ if (e.key === 'rep-ct-jump') ctJump(); });
 /* control: verificación de contacto — el próximo código es incorrecto */
 (function(){ var o = [['0', 'Correct'], ['1', 'Wrong']], d = document.createElement('div'); d.className = 'ff-sw';
   function sync(){ [].forEach.call(d.children, function(c){ c.classList.toggle('on', (c.getAttribute('data-v') === '1') === CTWRONG); }); }
