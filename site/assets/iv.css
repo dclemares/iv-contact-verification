@@ -549,3 +549,4 @@ aside.fx-nointro>p{display:none!important}
 .n8-card{margin-top:14px}
 @media (prefers-reduced-motion:reduce){.n8-dot{animation:none}}
 .n8-lbl{margin-top:20px}.n8-lbl+.n8-pv{margin-top:0}
+.n6-acts{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap}.n6-acts .n6-paste{margin:0}.n6-acts .n6-help{margin:0;padding:8px 14px;background:#f4f5fa;font-size:13px}

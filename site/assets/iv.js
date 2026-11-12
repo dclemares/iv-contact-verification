@@ -271,6 +271,9 @@ function ctAddrI(){ return ctE() ? CTI.mailS : ctWA() ? CTI.wa : CTI.msgS; }
 function ctSendLbl(){ return CT.sent ? 'Send new code' : ctE() ? 'Send code' : ctWA() ? 'Send code on WhatsApp' : 'Send code by SMS'; }
 var CTDOMS = ['gmail.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'yahoo.com'];
 
+/* hoja «Didn’t get the code?» (6 y 7): consejo según el canal + reenviar / otro canal / llamada */
+function ctHelpSheet(){ var E = ctE(); return CT.sheet ? '<div class="n2-bg" data-a="ct-hclose"></div><div class="n2-sh n7-sh" role="dialog" aria-modal="true" aria-label="Didn’t get the code?"><div class="n2-gr"></div><button type="button" class="n2-x" data-a="ct-hclose" aria-label="Close">' + ic('<path d="M18 6 6 18M6 6l12 12"/>', 18) + '</button><h2 class="n2-h">Didn’t get the code?</h2><p class="n2-s">' + (E ? 'Emails can take a minute. Check spam or promotions too.' : ctWA() ? 'Make sure WhatsApp is installed on this number.' : 'Texts can take a minute, especially abroad.') + '</p>' + ctRowsH() + '</div>' : ''; }
+
 /* ---- 6 · Focus: miniprogreso de 2 pasos; todo en una tarjeta blanca; el destino dentro de la tarjeta del código; «Paste code»; ayudas en chips ---- */
 function ctV6(){
   var E = ctE(), done = CT.st !== 'in';
@@ -280,8 +283,7 @@ function ctV6(){
     act: btn('ct-send', ctSendLbl(), 'pri') };
   return { eye: '', ttl: 'Enter the code', sub: '',
     body: pg + '<div class="n6-card"><div class="n6-to"><span class="n6-ti">' + ctAddrI() + '</span><div><small>Sent ' + ctVia() + ' to</small><b>' + ctAddr() + '</b></div><button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Edit</button></div>'
-      + '<div class="n6-code"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div>' + ctOtpB() + '<button type="button" class="n6-paste" data-a="ct-paste">' + ic('<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/>', 16) + 'Paste code</button></div></div>'
-      + '<p class="n5-lh">Didn’t get it?</p>' + ctRowsH('n6-chips'),
+      + '<div class="n6-code"><div class="ct-ch"><span>6-digit code</span><span class="ct-exp" id="ct-exp"></span></div>' + ctOtpB() + '<div class="n6-acts"><button type="button" class="n6-paste" data-a="ct-paste">' + ic('<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/>', 16) + 'Paste code</button><button type="button" class="n7-help n6-help" data-a="ct-help">Didn’t get the code?</button></div></div></div>' + ctHelpSheet(),
     act: ctActOpen() };
 }
 
@@ -293,7 +295,7 @@ function ctV7(){
       : '<p class="iv-lbl">Get the code by</p><div class="n7-chs" role="radiogroup">' + [['wa', CTI.waL, 'WhatsApp', 'Usually the fastest'], ['sms', CTI.phone, 'SMS', 'Works on any phone']].map(function(c){ var on = CH === c[0]; return '<button type="button" role="radio" aria-checked="' + on + '" class="n7-ch' + (on ? ' on' : '') + (c[0] === 'wa' ? ' wa' : '') + '" data-a="ct-ch" data-v="' + c[0] + '"><span class="n7-chi">' + c[1] + '</span><b>' + c[2] + '</b><small>' + c[3] + '</small><i class="n7-ck">' + I.okS + '</i></button>'; }).join('') + '</div>';
     return { eye: 'Last step', ttl: E ? 'Add your email' : 'Add your mobile number', sub: E ? 'A 6-digit code will be sent to this email.' : 'Choose where the 6-digit code arrives.', body: ctNField() + extra, act: btn('ct-send', ctSendLbl(), 'pri') };
   }
-  var sheet = CT.sheet ? '<div class="n2-bg" data-a="ct-hclose"></div><div class="n2-sh n7-sh" role="dialog" aria-modal="true" aria-label="Didn’t get the code?"><div class="n2-gr"></div><button type="button" class="n2-x" data-a="ct-hclose" aria-label="Close">' + ic('<path d="M18 6 6 18M6 6l12 12"/>', 18) + '</button><h2 class="n2-h">Didn’t get the code?</h2><p class="n2-s">' + (E ? 'Emails can take a minute. Check spam or promotions too.' : ctWA() ? 'Make sure WhatsApp is installed on this number.' : 'Texts can take a minute, especially abroad.') + '</p>' + ctRowsH() + '</div>' : '';
+  var sheet = ctHelpSheet();
   return { eye: '', ttl: E ? 'Check your email' : ctWA() ? 'Check WhatsApp' : 'Check your messages', sub: '',
     body: '<div class="n7-card"><div class="n7-ring"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28"/><circle id="n7-arc" cx="32" cy="32" r="28" pathLength="100"/></svg><span class="n7-ri' + (ctWA() ? ' wa' : '') + '">' + (E ? CTI.mail : ctWA() ? CTI.waL : CTI.phone) + '</span></div>'
       + '<p class="n7-to">Code sent ' + ctTo() + '<br><b>' + ctAddr() + '</b> <button type="button" class="ct-chg" data-a="ct-edit">' + CTI.pen + 'Change</button></p><span class="ct-exp" id="ct-exp"></span>' + ctOtpB() + '</div>'
@@ -405,7 +407,7 @@ function ctCheck(){
   setTimeout(function(){
     if (S.step !== 'contact') return;
     if (CTWRONG || CT.code !== CTCODE) { CT.res = 'err'; CT.tries++; CTWRONG = false; if (window.__ctWrongSync) window.__ctWrongSync(); ctPaint(); var o = root.querySelector('#ct-otp'); if (o) { o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake'); } return; }
-    CT.res = 'ok'; ctNfHide(); clearInterval(CTT); ctPaint(); var h = root.querySelector('.iv-h'); if (h) h.textContent = ctE() ? 'Email confirmed' : 'Number confirmed'; var sb = root.querySelector('.iv-sub'); if (sb) sb.innerHTML = 'Thanks — ' + ctAddr() + ' is confirmed.'; [].forEach.call(root.querySelectorAll('.n5-lh,.n5-rs,.n6-paste,.n7-help'), function(x){ x.style.display = 'none'; });
+    CT.res = 'ok'; ctNfHide(); clearInterval(CTT); ctPaint(); var h = root.querySelector('.iv-h'); if (h) h.textContent = ctE() ? 'Email confirmed' : 'Number confirmed'; var sb = root.querySelector('.iv-sub'); if (sb) sb.innerHTML = 'Thanks — ' + ctAddr() + ' is confirmed.'; [].forEach.call(root.querySelectorAll('.n5-lh,.n5-rs,.n6-acts,.n7-help'), function(x){ x.style.display = 'none'; });
     var ft = root.querySelector('.iv-ft'); if (ft) ft.style.display = 'none';
     tm = setTimeout(function(){ finishIV(); }, 1300);
   }, 850);
