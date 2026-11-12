@@ -2,6 +2,8 @@
 
 Prototype of a new last step in the Chekin guest app identity verification (IV): after the document and selfie photos, the guest adds an email **or** a mobile number (one channel, set by the host) and confirms it with a 6-digit code. Built on top of a static replica of the guest app v2.
 
+**Final version: 6 · Focus** (selected by default).
+
 **Open it:** https://dclemares.github.io/iv-contact-verification/screens/g2-iv.m.html (mobile) · [desktop](https://dclemares.github.io/iv-contact-verification/screens/g2-iv.d.html) · [mobile + desktop](https://dclemares.github.io/iv-contact-verification/split.html?s=g2-iv)
 
 ## Flow
@@ -16,7 +18,7 @@ Document → photos → **Add your email / mobile / WhatsApp number → code** �
   - **3 · Keypad**: dark «Code sent to» card, large digits and an on-screen numeric keypad on mobile.
   - **4 · Link**: we send a link (plus a code); tapping it continues automatically, with «Enter the code instead» as a fallback.
   - **5 · Native**: modelled on WhatsApp's own number verification and Twilio Verify / Uber fallbacks. Country on its own row (defaults to the document's country) and a large number field, CTA «Send code» → «Verify your number» with the code in a white card (header, expiry, single-line «––– –––» digits that check themselves, no verify button) and «Wrong number?» → «Didn't get the code?» list: Resend SMS / on WhatsApp (0:30), get it on the other channel (0:30), Call me with the code (1:00); for email: Resend email, Open mail app, Use a different email.
-  - **6 · Focus** (on top of 5): a two-segment progress «Add number · Enter code»; everything in one white card (country and number, or email); CTA names the channel («Send code on WhatsApp»). Code screen: destination row with Edit inside the same card, boxed digits, expiry, a «Paste code» chip (for codes copied from WhatsApp's «Copy code»), and, next to it, «Didn't get the code?», which opens the same help sheet as version 7.
+  - **6 · Focus — FINAL, the default version** (on top of 5): a two-segment progress «Add number · Enter code»; everything in one white card (country and number, or email); CTA names the channel («Send code on WhatsApp»). Code screen: destination row with Edit inside the same card, boxed digits, expiry, a «Paste code» chip (for codes copied from WhatsApp's «Copy code»), and, next to it, «Didn't get the code?», which opens the same help sheet as version 7 (resend, other channel, call; for email: resend or use a different email). No «Open mail app / Open WhatsApp» button. On desktop the code sits in a centred 440 px column.
   - **7 · Smart** (on top of 5): for phone channels the guest picks where the code arrives — WhatsApp («Usually the fastest») or SMS («Works on any phone») tiles; for email, one-tap domain chips (@gmail.com, @hotmail.com…). Code screen: one white card with a countdown ring around the channel icon, destination with Change, digits; fallbacks hidden behind «Didn't get the code?», which opens a bottom sheet with a channel-specific tip.
   - **8 · Preview** (on top of 5): under the field, «What you'll receive» shows a mock of the real message (WhatsApp chat with verified sender and «Copy code», SMS bubble or inbox row) so the guest recognises it. Code screen: the same message with «Delivered ✓✓» / «Sent just now», then «Type the code here» white card and the fallback list.
 - **Contact code (next try)**: Correct · Wrong.
